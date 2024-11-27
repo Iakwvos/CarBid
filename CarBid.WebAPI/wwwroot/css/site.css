@@ -1,0 +1,138 @@
+/* Theme Variables */
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --accent-color: #e74c3c;
+    --success-color: #2ecc71;
+    --warning-color: #f1c40f;
+    --danger-color: #e74c3c;
+    --gray-light: #f8f9fa;
+    --gray-medium: #6c757d;
+    --animation-speed: 0.3s;
+}
+
+/* Enhanced Card Animations */
+.auction-card {
+    transform: translateY(0);
+    opacity: 1;
+    transition: all var(--animation-speed) ease-in-out;
+}
+
+.auction-card.new {
+    animation: slideIn 0.5s ease-out;
+}
+
+.auction-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-badge.active {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.status-badge.ending-soon {
+    background-color: var(--warning-color);
+    color: white;
+}
+
+.status-badge.ended {
+    background-color: var(--gray-medium);
+    color: white;
+}
+
+/* Enhanced Animations */
+@keyframes slideIn {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes bidPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Responsive Tabs */
+.auction-tabs {
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--gray-light);
+}
+
+.auction-tabs .nav-link {
+    color: var(--gray-medium);
+    border: none;
+    padding: 1rem 1.5rem;
+    transition: all var(--animation-speed) ease;
+}
+
+.auction-tabs .nav-link.active {
+    color: var(--primary-color);
+    border-bottom: 3px solid var(--secondary-color);
+}
+
+/* Loading Skeleton */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Add to existing CSS */
+.stat-card {
+    background-color: var(--gray-light);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.bid-history {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.bid-table {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--gray-light);
+    cursor: pointer;
+}
+
+.winning-bid {
+    background-color: rgba(46, 204, 113, 0.1);
+    font-weight: bold;
+}
+
+.chart-tooltip {
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+} 

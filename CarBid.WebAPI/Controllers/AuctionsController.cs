@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using CarBid.Application.DTOs;
 using CarBid.Application.Interfaces;
 using CarBid.WebAPI.Hubs;
+using System.Text;
 
 namespace CarBid.WebAPI.Controllers
 {
@@ -178,6 +179,95 @@ namespace CarBid.WebAPI.Controllers
             {
                 _logger.LogError($"Debug endpoint error: {ex}");
                 return StatusCode(500, new { error = ex.Message, stack = ex.StackTrace });
+            }
+        }
+
+        [HttpGet("past")]
+        public async Task<ActionResult<IEnumerable<AuctionDto>>> GetPastAuctions()
+        {
+            try
+            {
+                var auctions = await _auctionService.GetPastAuctionsAsync();
+                var auctionDtos = new List<AuctionDto>();
+
+                foreach (var auction in auctions)
+                {
+                    var winningBid = await _auctionService.GetWinningBidAsync(auction.Id);
+                    var bids = await _auctionService.GetAuctionBidsAsync(auction.Id);
+
+                    auctionDtos.Add(new AuctionDto
+                    {
+                        Id = auction.Id,
+                        CurrentPrice = auction.CurrentPrice,
+                        StartingPrice = auction.CurrentPrice,
+                        StartTime = auction.StartTime,
+                        EndTime = auction.EndTime,
+                        IsActive = auction.IsActive,
+                        Car = auction.Car != null ? new CarDto
+                        {
+                            Id = auction.Car.Id,
+                            Make = auction.Car.Make,
+                            Model = auction.Car.Model,
+                            Year = auction.Car.Year,
+                            Description = auction.Car.Description
+                        } : null,
+                        TotalBids = bids.Count(),
+                        WinningBid = winningBid != null ? new BidDto
+                        {
+                            Id = winningBid.Id,
+                            Amount = winningBid.Amount,
+                            BidTime = winningBid.BidTime,
+                            BidderId = winningBid.BidderId
+                        } : null
+                    });
+                }
+
+                return Ok(auctionDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting past auctions: {ex}");
+                return StatusCode(500, "Error retrieving past auctions");
+            }
+        }
+
+        [HttpGet("{id}/details")]
+        public async Task<ActionResult<AuctionDetailDto>> GetAuctionDetails(int id)
+        {
+            try
+            {
+                var details = await _auctionService.GetAuctionDetailsAsync(id);
+                return Ok(details);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting auction details: {ex}");
+                return StatusCode(500, "Error retrieving auction details");
+            }
+        }
+
+        [HttpGet("{id}/export")]
+        public async Task<ActionResult> ExportAuctionData(int id)
+        {
+            try
+            {
+                var details = await _auctionService.GetAuctionDetailsAsync(id);
+                
+                var csv = new StringBuilder();
+                csv.AppendLine("Time,Amount,Bidder");
+                
+                foreach (var bid in details.BidHistory)
+                {
+                    csv.AppendLine($"{bid.BidTime},{bid.Amount},{bid.BidderId}");
+                }
+
+                byte[] bytes = Encoding.UTF8.GetBytes(csv.ToString());
+                return File(bytes, "text/csv", $"auction_{id}_bids.csv");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error exporting auction data: {ex}");
+                return StatusCode(500, "Error exporting auction data");
             }
         }
     }

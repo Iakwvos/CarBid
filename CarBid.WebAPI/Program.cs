@@ -1,12 +1,13 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using CarBid.Infrastructure.Data;
 using CarBid.Infrastructure.Repositories;
 using CarBid.Application.Interfaces;
 using CarBid.Application.Services;
-using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.SignalR;
 using CarBid.WebAPI.Hubs;
 using System.Text.Json.Serialization;
+using Swashbuckle.AspNetCore.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,11 +49,14 @@ builder.Services.AddCors(options =>
 // Configure services
 builder.Services.AddScoped<IAuctionService, AuctionService>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<ICarService, CarService>();
+
+// Get connection string with null check
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        b => b.MigrationsAssembly("CarBid.WebAPI")
-    ));
+    options.UseNpgsql(connectionString));
 
 var app = builder.Build();
 

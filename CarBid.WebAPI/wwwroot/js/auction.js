@@ -2,6 +2,7 @@ const AuctionApp = (() => {
     // State management
     let connection = null;
     let currentAuctions = [];
+    let pastAuctions = [];
 
     // DOM Elements
     const DOM = {
@@ -23,7 +24,10 @@ const AuctionApp = (() => {
         try {
             attachEventListeners();
             await initializeSignalR();
-            await loadAuctions();
+            await Promise.all([
+                loadAuctions(),
+                loadPastAuctions()
+            ]);
             startTimeUpdates();
         } catch (error) {
             console.error('Initialization error:', error);
@@ -38,6 +42,8 @@ const AuctionApp = (() => {
         DOM.searchInput.addEventListener('input', debounce(filterAuctions, 300));
         DOM.sortSelect.addEventListener('change', filterAuctions);
         DOM.auctionsContainer.addEventListener('click', handleBidButtonClick);
+        document.getElementById('pastSearchInput').addEventListener('input', debounce(filterPastAuctions, 300));
+        document.getElementById('pastSortSelect').addEventListener('change', filterPastAuctions);
     }
 
     // SignalR Setup
@@ -76,6 +82,22 @@ const AuctionApp = (() => {
         } catch (error) {
             console.error('Error loading auctions:', error);
             showToast('Error', 'Failed to load auctions', 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    async function loadPastAuctions() {
+        showLoading(true);
+        try {
+            const response = await fetch('/api/auctions/past');
+            if (!response.ok) throw new Error('Failed to fetch past auctions');
+            
+            pastAuctions = await response.json();
+            filterPastAuctions();
+        } catch (error) {
+            console.error('Error loading past auctions:', error);
+            showToast('Error', 'Failed to load past auctions', 'error');
         } finally {
             showLoading(false);
         }
@@ -141,6 +163,44 @@ const AuctionApp = (() => {
         `;
 
         return col;
+    }
+
+    function displayPastAuctions(auctions) {
+        const container = document.getElementById('pastAuctionsContainer');
+        container.innerHTML = '';
+
+        auctions.forEach(auction => {
+            const card = document.createElement('div');
+            card.className = 'col-md-4 mb-4';
+            card.innerHTML = `
+                <div class="card auction-card" onclick="AuctionApp.showAuctionDetails(${auction.id})">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0">
+                                ${auction.car.make} ${auction.car.model} (${auction.car.year})
+                            </h5>
+                            <span class="status-badge ended">Ended</span>
+                        </div>
+                        <div class="auction-stats">
+                            <div class="stat-item">
+                                <div class="stat-label">Final Price</div>
+                                <div class="stat-value">$${auction.currentPrice.toLocaleString()}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Total Bids</div>
+                                <div class="stat-value">${auction.totalBids}</div>
+                            </div>
+                        </div>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                Ended ${new Date(auction.endTime).toLocaleDateString()}
+                            </small>
+                        </p>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
     }
 
     // Bidding Functions
@@ -326,6 +386,34 @@ const AuctionApp = (() => {
         });
     }
 
+    function filterPastAuctions() {
+        const searchTerm = document.getElementById('pastSearchInput').value.toLowerCase();
+        const sortBy = document.getElementById('pastSortSelect').value;
+        
+        let filtered = pastAuctions.filter(auction => {
+            const searchString = `${auction.car.make} ${auction.car.model} ${auction.car.year}`.toLowerCase();
+            return searchString.includes(searchTerm);
+        });
+
+        sortPastAuctions(filtered, sortBy);
+        displayPastAuctions(filtered);
+    }
+
+    function sortPastAuctions(auctions, sortBy) {
+        auctions.sort((a, b) => {
+            switch(sortBy) {
+                case 'endedRecent':
+                    return new Date(b.endTime) - new Date(a.endTime);
+                case 'highestPrice':
+                    return b.currentPrice - a.currentPrice;
+                case 'mostBids':
+                    return b.totalBids - a.totalBids;
+                default:
+                    return 0;
+            }
+        });
+    }
+
     // Time Updates
     function startTimeUpdates() {
         setInterval(updateAllTimers, 1000);
@@ -352,3 +440,128 @@ document.addEventListener('DOMContentLoaded', AuctionApp.initialize);
 
 // Make openBidModal globally available if needed
 window.openBidModal = AuctionApp.openBidModal;
+
+async function showAuctionDetails(auctionId) {
+    try {
+        showLoading(true);
+        const response = await fetch(`/api/auctions/${auctionId}/details`);
+        if (!response.ok) throw new Error('Failed to fetch auction details');
+        
+        const details = await response.json();
+        displayAuctionDetails(details);
+        
+        const modal = new bootstrap.Modal(document.getElementById('auctionDetailModal'));
+        modal.show();
+    } catch (error) {
+        console.error('Error loading auction details:', error);
+        showToast('Error', 'Failed to load auction details', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function displayAuctionDetails(details) {
+    // Update basic information
+    document.getElementById('detailCarTitle').textContent = 
+        `${details.auction.car.make} ${details.auction.car.model} (${details.auction.car.year})`;
+    document.getElementById('detailCarDescription').textContent = details.auction.car.description;
+    document.getElementById('detailFinalPrice').textContent = `$${details.auction.currentPrice.toLocaleString()}`;
+    document.getElementById('detailStartingPrice').textContent = `$${details.auction.startingPrice.toLocaleString()}`;
+    document.getElementById('detailTotalBids').textContent = details.auction.totalBids;
+
+    // Create bid history chart
+    createBidHistoryChart(details.bidHistory);
+    
+    // Populate bid history table
+    const tableBody = document.getElementById('bidHistoryTable');
+    tableBody.innerHTML = '';
+    
+    details.bidHistory.forEach(bid => {
+        const row = document.createElement('tr');
+        if (bid.id === details.auction.winningBid?.id) {
+            row.classList.add('winning-bid');
+        }
+        
+        row.innerHTML = `
+            <td>${new Date(bid.bidTime).toLocaleString()}</td>
+            <td>$${bid.amount.toLocaleString()}</td>
+            <td>${bid.bidderId}</td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+function createBidHistoryChart(bidHistory) {
+    const ctx = document.getElementById('bidHistoryChart').getContext('2d');
+    
+    // Destroy existing chart if it exists
+    if (window.bidChart) {
+        window.bidChart.destroy();
+    }
+
+    const data = bidHistory.map(bid => ({
+        x: new Date(bid.bidTime),
+        y: bid.amount
+    }));
+
+    window.bidChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [{
+                label: 'Bid Amount',
+                data: data,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'minute'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: value => `$${value.toLocaleString()}`
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: context => `$${context.parsed.y.toLocaleString()}`
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Add event listener for export button
+document.getElementById('exportAuctionData').addEventListener('click', async () => {
+    const auctionId = document.getElementById('auctionId').value;
+    try {
+        const response = await fetch(`/api/auctions/${auctionId}/export`);
+        if (!response.ok) throw new Error('Failed to export auction data');
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `auction_${auctionId}_bids.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        
+        showToast('Success', 'Auction data exported successfully', 'success');
+    } catch (error) {
+        console.error('Error exporting auction data:', error);
+        showToast('Error', 'Failed to export auction data', 'error');
+    }
+});
