@@ -665,10 +665,31 @@ const AuctionApp = (() => {
         }
     }
 
-    // Public API
+    // Add this new function alongside other functions but before the return statement
+    async function showAuctionDetails(auctionId) {
+        try {
+            showLoading(true);
+            const response = await fetch(`/api/auctions/${auctionId}/details`);
+            if (!response.ok) throw new Error('Failed to fetch auction details');
+            
+            const details = await response.json();
+            displayAuctionDetails(details);
+            
+            const modal = new bootstrap.Modal(document.getElementById('auctionDetailModal'));
+            modal.show();
+        } catch (error) {
+            console.error('Error loading auction details:', error);
+            showToast('Error', 'Failed to load auction details', 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // In the return statement, add showAuctionDetails while keeping existing returns
     return {
         initialize,
-        openBidModal
+        openBidModal,
+        showAuctionDetails
     };
 })();
 
@@ -698,34 +719,55 @@ async function showAuctionDetails(auctionId) {
 }
 
 function displayAuctionDetails(details) {
-    // Update basic information
-    document.getElementById('detailCarTitle').textContent = 
-        `${details.auction.car.make} ${details.auction.car.model} (${details.auction.car.year})`;
-    document.getElementById('detailCarDescription').textContent = details.auction.car.description;
-    document.getElementById('detailFinalPrice').textContent = `$${details.auction.currentPrice.toLocaleString()}`;
-    document.getElementById('detailStartingPrice').textContent = `$${details.auction.startingPrice.toLocaleString()}`;
-    document.getElementById('detailTotalBids').textContent = details.auction.totalBids;
+    // Safely access car details with optional chaining and fallback values
+    const car = details.auction?.car || {};
+    const carTitle = car.make && car.model ? 
+        `${car.make} ${car.model} ${car.year ? `(${car.year})` : ''}` : 
+        'Car Details Unavailable';
 
-    // Create bid history chart
-    createBidHistoryChart(details.bidHistory);
+    // Update basic information with null checks
+    document.getElementById('detailCarTitle').textContent = carTitle;
+    document.getElementById('detailCarDescription').textContent = car.description || 'No description available';
+    document.getElementById('detailFinalPrice').textContent = 
+        `$${(details.auction?.currentPrice || 0).toLocaleString()}`;
     
-    // Populate bid history table
-    const tableBody = document.getElementById('bidHistoryTable');
-    tableBody.innerHTML = '';
-    
-    details.bidHistory.forEach(bid => {
-        const row = document.createElement('tr');
-        if (bid.id === details.auction.winningBid?.id) {
-            row.classList.add('winning-bid');
-        }
-        
-        row.innerHTML = `
-            <td>${new Date(bid.bidTime).toLocaleString()}</td>
-            <td>$${bid.amount.toLocaleString()}</td>
-            <td>${bid.bidderId}</td>
-        `;
-        tableBody.appendChild(row);
-    });
+    // Create bid history table
+    const bidHistoryContainer = document.getElementById('bidHistoryContainer');
+    const bidHistory = details.bidHistory || [];
+    const winningBid = details.winningBid;
+
+    bidHistoryContainer.innerHTML = `
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Amount</th>
+                        <th>Bidder</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${bidHistory
+                        .sort((a, b) => new Date(b.bidTime) - new Date(a.bidTime))
+                        .map(bid => `
+                            <tr class="${bid.id === winningBid?.id ? 'table-success' : ''}">
+                                <td>${new Date(bid.bidTime).toLocaleString()}</td>
+                                <td>$${bid.amount.toLocaleString()}</td>
+                                <td>${bid.bidderId || 'Anonymous'}</td>
+                                <td>${bid.id === winningBid?.id ? 
+                                    '<span class="badge bg-success">Winner</span>' : 
+                                    '<span class="badge bg-secondary">Bid</span>'}
+                                </td>
+                            </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-muted mt-2">
+            <small><i class="fas fa-info-circle me-1"></i>Total Bids: ${bidHistory.length}</small>
+        </div>
+    `;
 }
 
 function createBidHistoryChart(bidHistory) {

@@ -1,34 +1,80 @@
-# CarBid - Real-time Car Auction System
+# CarBid - Real-Time Car Auction Platform
 
-A real-time car auction system built with .NET Core and SignalR.
+CarBid is a modern, real-time car auction platform built with .NET and JavaScript. It enables users to create car auctions and participate in live bidding with real-time updates.
 
 ## Features
 
-- Real-time bidding with SignalR
-- Live auction updates
-- Search and filter auctions
-- Sort by price and time remaining
-- Responsive design
-- Toast notifications
-- Loading states
+- **Real-time Bidding**: Live updates using SignalR
+- **Active Auctions**: Browse and bid on currently active auctions
+- **Past Auctions**: View completed auctions with detailed bid history
+- **Dashboard Statistics**: Real-time stats showing platform activity
+- **Auction Management**: Create and manage car auctions
+- **Bid History**: Detailed bid history with timestamps and winning bid indicators
+- **Export Functionality**: Export auction data to CSV
+- **Responsive Design**: Works on desktop and mobile devices
 
-## Technology Stack
+## Technical Stack
 
-- Backend: .NET Core 6.0
-- Frontend: HTML5, CSS3, JavaScript
-- Real-time: SignalR
-- Database: Entity Framework Core
-- UI Framework: Bootstrap 5
-- Icons: Font Awesome
+- **Backend**: .NET 6.0
+- **Frontend**: Vanilla JavaScript, Bootstrap 5
+- **Real-time Communication**: SignalR
+- **Database**: Entity Framework Core
+- **Architecture**: Clean Architecture pattern
+
+## Project Structure
+
+- `CarBid.Domain`: Core domain entities and business logic
+- `CarBid.Application`: Application services and interfaces
+- `CarBid.Infrastructure`: Data access and external services
+- `CarBid.WebAPI`: API endpoints and SignalR hubs
 
 ## Getting Started
 
-### Prerequisites
+1. Clone the repository
+2. Ensure you have .NET 6.0 SDK installed
+3. Update the connection string in `appsettings.json`
+4. Run database migrations:
+   ```bash
+   dotnet ef database update
+   ```
+5. Run the application:
+   ```bash
+   dotnet run
+   ```
 
-- .NET Core SDK 6.0 or later
-- SQL Server (LocalDB or higher)
-- Node.js (for development)
+## Key Features
 
-### Installation
+### Auction Management
+- Create new auctions with car details
+- Set auction duration and starting price
+- Automatic auction closing
 
-1. Clone the repository 
+### Bidding System
+- Real-time bid updates
+- Minimum bid increment enforcement
+- Bid history tracking
+- Winner determination
+
+### Dashboard
+- Active auction count
+- Total bids today
+- Ending soon auctions
+- Highest active bid
+
+### Past Auctions
+- Complete auction history
+- Detailed bid history with timestamps
+- Winner identification
+- Exportable auction data
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## Contact
+
+iakwvos99@gmail.com

@@ -880,3 +880,33 @@ body {
     50% { transform: scale(1.1); }
     100% { transform: scale(1); }
 }
+
+/* Bid History Styles */
+.table-responsive {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.table th {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 1;
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--gray-50);
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.5em 0.75em;
+}
+
+.table tr.table-success {
+    background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+.table tr.table-success:hover {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+}
