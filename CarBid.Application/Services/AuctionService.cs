@@ -2,6 +2,9 @@ using Microsoft.Extensions.Logging;
 using CarBid.Application.DTOs;
 using CarBid.Application.Interfaces;
 using CarBid.Domain.Entities;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CarBid.Application.Services
 {
@@ -127,6 +130,101 @@ namespace CarBid.Application.Services
             auction.IsActive = false;
             await _auctionRepository.UpdateAsync(auction);
             return true;
+        }
+
+        public async Task<IEnumerable<Auction>> GetPastAuctionsAsync()
+        {
+            try
+            {
+                _logger.LogInformation("Getting past auctions");
+                var auctions = await _auctionRepository.GetAllWithIncludesAsync(a => a.Car);
+                return auctions.Where(a => !a.IsActive && a.EndTime <= DateTime.UtcNow).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting past auctions: {ex}");
+                throw;
+            }
+        }
+
+        public async Task<AuctionDetailDto> GetAuctionDetailsAsync(int id)
+        {
+            try
+            {
+                var auction = await _auctionRepository.GetByIdAsync(id);
+                if (auction == null)
+                    throw new Exception("Auction not found");
+
+                var bids = await GetAuctionBidsAsync(id);
+                var winningBid = await GetWinningBidAsync(id);
+
+                return new AuctionDetailDto
+                {
+                    Auction = new AuctionDto
+                    {
+                        Id = auction.Id,
+                        CurrentPrice = auction.CurrentPrice,
+                        EndTime = auction.EndTime,
+                        Car = auction.Car != null ? new CarDto
+                        {
+                            Id = auction.Car.Id,
+                            Make = auction.Car.Make,
+                            Model = auction.Car.Model,
+                            Year = auction.Car.Year,
+                            Description = auction.Car.Description
+                        } : null
+                    },
+                    BidHistory = bids.Select(b => new BidDto
+                    {
+                        Id = b.Id,
+                        AuctionId = b.AuctionId,
+                        Amount = b.Amount,
+                        BidTime = b.BidTime,
+                        BidderId = b.BidderId
+                    }).ToList(),
+                    WinningBid = winningBid != null ? new BidDto
+                    {
+                        Id = winningBid.Id,
+                        AuctionId = winningBid.AuctionId,
+                        Amount = winningBid.Amount,
+                        BidTime = winningBid.BidTime,
+                        BidderId = winningBid.BidderId
+                    } : null
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting auction details: {ex}");
+                throw;
+            }
+        }
+
+        public async Task<Bid?> GetWinningBidAsync(int auctionId)
+        {
+            try
+            {
+                var bids = await _bidRepository.GetAllAsync();
+                return bids.Where(b => b.AuctionId == auctionId).OrderByDescending(b => b.Amount).FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting winning bid: {ex}");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<Bid>> GetAuctionBidsAsync(int auctionId)
+        {
+            try
+            {
+                var bids = await _bidRepository.GetAllAsync();
+                return bids.Where(b => b.AuctionId == auctionId).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting auction bids: {ex}");
+                throw;
+            }
         }
     }
 } 

@@ -11,5 +11,9 @@ namespace CarBid.Application.Interfaces
         Task<Bid> PlaceBidAsync(PlaceBidDto bidDto);
         Task<decimal> GetCurrentHighestBidAsync(int auctionId);
         Task<bool> EndAuctionAsync(int auctionId);
+        Task<IEnumerable<Auction>> GetPastAuctionsAsync();
+        Task<AuctionDetailDto> GetAuctionDetailsAsync(int id);
+        Task<Bid?> GetWinningBidAsync(int auctionId);
+        Task<IEnumerable<Bid>> GetAuctionBidsAsync(int auctionId);
     }
 } 
