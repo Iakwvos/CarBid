@@ -3,37 +3,48 @@ const AuctionApp = (() => {
     let connection = null;
     let currentAuctions = [];
     let pastAuctions = [];
-
-    // DOM Elements
-    const DOM = {
-        auctionsContainer: document.getElementById('auctionsContainer'),
-        searchInput: document.getElementById('searchInput'),
-        sortSelect: document.getElementById('sortSelect'),
-        refreshButton: document.getElementById('refreshButton'),
-        loadingOverlay: document.getElementById('loadingOverlay'),
-        bidModal: document.getElementById('bidModal'),
-        placeBidBtn: document.getElementById('placeBidBtn'),
-        bidAmount: document.getElementById('bidAmount'),
-        currentBid: document.getElementById('currentBid'),
-        timeLeft: document.getElementById('timeLeft'),
-        auctionId: document.getElementById('auctionId')
-    };
+    let DOM = {};
 
     // Initialize application
     async function initialize() {
         try {
-            attachEventListeners();
-            initializeCreateAuction();
+            // Initialize DOM elements
+            DOM = {
+                auctionsContainer: document.getElementById('auctionsContainer'),
+                searchInput: document.getElementById('searchInput'),
+                sortSelect: document.getElementById('sortSelect'),
+                refreshButton: document.getElementById('refreshButton'),
+                loadingOverlay: document.getElementById('loadingOverlay'),
+                bidModal: document.getElementById('bidModal'),
+                placeBidBtn: document.getElementById('placeBidBtn'),
+                bidAmount: document.getElementById('bidAmount'),
+                currentBid: document.getElementById('currentBid'),
+                timeLeft: document.getElementById('timeLeft'),
+                auctionId: document.getElementById('auctionId')
+            };
+
+            // Log missing elements
+            const missingElements = Object.entries(DOM)
+                .filter(([key, value]) => !value)
+                .map(([key]) => key);
+            
+            if (missingElements.length > 0) {
+                console.warn('Missing DOM elements:', missingElements);
+            }
+
             await initializeSignalR();
+            attachEventListeners();
             await Promise.all([
                 loadAuctions(),
                 loadPastAuctions(),
                 loadDashboardStats()
             ]);
+            
             startTimeUpdates();
             
             // Refresh stats periodically
             setInterval(loadDashboardStats, 30000); // Refresh every 30 seconds
+            showDebugInfo();
         } catch (error) {
             console.error('Initialization error:', error);
             showToast('Error', 'Failed to initialize application', 'error');
@@ -42,13 +53,32 @@ const AuctionApp = (() => {
 
     // Event Listeners
     function attachEventListeners() {
-        DOM.refreshButton.addEventListener('click', loadAuctions);
-        DOM.placeBidBtn.addEventListener('click', handleBidSubmission);
-        DOM.searchInput.addEventListener('input', debounce(filterAuctions, 300));
-        DOM.sortSelect.addEventListener('change', filterAuctions);
-        DOM.auctionsContainer.addEventListener('click', handleBidButtonClick);
-        document.getElementById('pastSearchInput').addEventListener('input', debounce(filterPastAuctions, 300));
-        document.getElementById('pastSortSelect').addEventListener('change', filterPastAuctions);
+        // Only attach event listeners if elements exist
+        if (DOM.refreshButton) {
+            DOM.refreshButton.addEventListener('click', loadAuctions);
+        }
+        if (DOM.searchInput) {
+            DOM.searchInput.addEventListener('input', debounce(filterAuctions, 300));
+        }
+        if (DOM.sortSelect) {
+            DOM.sortSelect.addEventListener('change', filterAuctions);
+        }
+        if (DOM.auctionsContainer) {
+            DOM.auctionsContainer.addEventListener('click', handleBidButtonClick);
+        }
+
+        // Optional elements
+        document.getElementById('pastSearchInput')?.addEventListener('input', 
+            debounce(filterPastAuctions, 300));
+        document.getElementById('pastSortSelect')?.addEventListener('change', 
+            filterPastAuctions);
+        document.getElementById('createAuctionModalBtn')?.addEventListener('click', () => {
+            const modal = new bootstrap.Modal(document.getElementById('createAuctionModal'));
+            modal?.show();
+        });
+
+        // Add bid button listener
+        DOM.placeBidBtn?.addEventListener('click', handleBidSubmission);
     }
 
     // SignalR Setup
@@ -61,6 +91,7 @@ const AuctionApp = (() => {
                 .build();
 
             connection.on("BidPlaced", handleNewBid);
+            
             await connection.start();
             console.log("SignalR Connected!");
         } catch (error) {
@@ -73,11 +104,23 @@ const AuctionApp = (() => {
     async function loadAuctions() {
         showLoading(true);
         try {
-            const response = await fetch('/api/auctions/active');
-            if (!response.ok) throw new Error('Failed to fetch auctions');
+            console.log('Loading auctions...');
+            const response = await fetch('/api/auctions/active', {
+                headers: getAuthHeaders()
+            });
+
+            console.log('Response status:', response.status);
+            const data = await response.json();
+            console.log('Received data:', data);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch auctions');
+            }
             
-            currentAuctions = await response.json();
-            filterAuctions(); // This will handle the display
+            currentAuctions = data;
+            console.log('Current auctions:', currentAuctions);
+
+            displayAuctions(currentAuctions);
 
             if (connection?.state === 'Connected') {
                 currentAuctions.forEach(async (auction) => {
@@ -87,6 +130,15 @@ const AuctionApp = (() => {
         } catch (error) {
             console.error('Error loading auctions:', error);
             showToast('Error', 'Failed to load auctions', 'error');
+            if (DOM.auctionsContainer) {
+                DOM.auctionsContainer.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Error loading auctions: ${error.message}
+                        </div>
+                    </div>`;
+            }
         } finally {
             showLoading(false);
         }
@@ -109,18 +161,31 @@ const AuctionApp = (() => {
     }
 
     function displayAuctions(auctions) {
+        console.log('Displaying auctions:', auctions);
+        
+        if (!DOM.auctionsContainer) {
+            console.error('Auctions container not found');
+            return;
+        }
+        
         DOM.auctionsContainer.innerHTML = '';
         
-        if (auctions.length === 0) {
+        if (!auctions || auctions.length === 0) {
+            console.log('No auctions to display');
             DOM.auctionsContainer.innerHTML = `
                 <div class="col-12 text-center">
-                    <p class="text-muted">No active auctions found</p>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No active auctions found
+                    </div>
                 </div>`;
             return;
         }
 
+        console.log(`Creating ${auctions.length} auction cards`);
         auctions.forEach(auction => {
-            DOM.auctionsContainer.appendChild(createAuctionCard(auction));
+            const card = createAuctionCard(auction);
+            DOM.auctionsContainer.appendChild(card);
         });
     }
 
@@ -137,7 +202,7 @@ const AuctionApp = (() => {
                 <div class="card-body">
                     <h5 class="card-title">
                         <i class="fas fa-car me-2"></i>
-                        ${auction.car.make} ${auction.car.model} (${auction.car.year})
+                        ${auction.car?.make} ${auction.car?.model} (${auction.car?.year})
                     </h5>
                     <div class="auction-stats mb-3">
                         <div class="stat-item">
@@ -156,7 +221,7 @@ const AuctionApp = (() => {
                     <p class="card-text">
                         <small class="text-muted">
                             <i class="fas fa-info-circle me-1"></i>
-                            ${auction.car.description || 'No description available'}
+                            ${auction.car?.description || 'No description available'}
                         </small>
                     </p>
                     <button class="btn btn-primary bid-button w-100 open-bid-modal" 
@@ -240,16 +305,19 @@ const AuctionApp = (() => {
         }, 1000);
         
         // Join auction-specific SignalR group
-        if (connection) {
-            connection.invoke("JoinAuction", auctionId)
-                .catch(err => console.error("Error joining auction group:", err));
+        if (connection?.state === signalR.HubConnectionState.Connected) {
+            connection.invoke("JoinAuction", parseInt(auctionId))
+                .catch(err => {
+                    console.error("Error joining auction group:", err);
+                    showToast('Error', 'Failed to join auction group', 'error');
+                });
         }
         
         // Clear interval and leave auction group when modal is closed
         DOM.bidModal.addEventListener('hidden.bs.modal', () => {
             clearInterval(timerInterval);
-            if (connection) {
-                connection.invoke("LeaveAuction", auctionId)
+            if (connection?.state === signalR.HubConnectionState.Connected) {
+                connection.invoke("LeaveAuction", parseInt(auctionId))
                     .catch(err => console.error("Error leaving auction group:", err));
             }
         }, { once: true });
@@ -900,4 +968,22 @@ function getAuthHeaders() {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : ''
     };
+}
+
+function showDebugInfo() {
+    const debugInfo = document.getElementById('debug-info');
+    const debugContent = document.getElementById('debug-content');
+    if (debugInfo && debugContent) {
+        debugInfo.style.display = 'block';
+        debugContent.innerHTML = `
+            <pre>
+Current Auctions: ${JSON.stringify(currentAuctions, null, 2)}
+DOM Elements Present:
+- auctionsContainer: ${!!DOM.auctionsContainer}
+- searchInput: ${!!DOM.searchInput}
+- sortSelect: ${!!DOM.sortSelect}
+- loadingOverlay: ${!!DOM.loadingOverlay}
+            </pre>
+        `;
+    }
 }

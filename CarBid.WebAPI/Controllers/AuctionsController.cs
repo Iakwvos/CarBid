@@ -12,15 +12,18 @@ namespace CarBid.WebAPI.Controllers
     public class AuctionsController : ControllerBase
     {
         private readonly IAuctionService _auctionService;
+        private readonly ICarService _carService;
         private readonly IHubContext<AuctionHub> _hubContext;
         private readonly ILogger<AuctionsController> _logger;
 
         public AuctionsController(
             IAuctionService auctionService,
+            ICarService carService,
             IHubContext<AuctionHub> hubContext,
             ILogger<AuctionsController> logger)
         {
             _auctionService = auctionService;
+            _carService = carService;
             _hubContext = hubContext;
             _logger = logger;
         }
@@ -100,16 +103,22 @@ namespace CarBid.WebAPI.Controllers
                 _logger.LogInformation("Getting active auctions");
                 var auctions = await _auctionService.GetActiveAuctionsAsync();
                 
-                if (auctions == null)
+                _logger.LogInformation($"Retrieved {auctions?.Count() ?? 0} auctions from service");
+                
+                if (auctions == null || !auctions.Any())
                 {
-                    return NotFound("No auctions found");
+                    _logger.LogInformation("No active auctions found");
+                    return Ok(new List<AuctionDto>()); // Return empty list instead of NotFound
                 }
                 
                 var auctionDtos = auctions.Select(a => new AuctionDto
                 {
                     Id = a.Id,
                     CurrentPrice = a.CurrentPrice,
+                    StartingPrice = a.StartingPrice,
+                    StartTime = a.StartTime,
                     EndTime = a.EndTime,
+                    IsActive = a.IsActive,
                     Car = a.Car != null ? new CarDto
                     {
                         Id = a.Car.Id,
@@ -120,12 +129,14 @@ namespace CarBid.WebAPI.Controllers
                     } : null
                 }).ToList();
 
+                _logger.LogInformation($"Mapped {auctionDtos.Count} auction DTOs");
+                
                 return Ok(auctionDtos);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error getting active auctions: {ex}");
-                return StatusCode(500, new { error = "Internal server error while retrieving auctions", details = ex.Message });
+                return StatusCode(500, new { error = ex.Message });
             }
         }
 
@@ -282,7 +293,53 @@ namespace CarBid.WebAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"Error getting dashboard stats: {ex}");
-                return StatusCode(500, "Error retrieving dashboard stats");
+                return StatusCode(500, new { 
+                    error = "Error retrieving dashboard stats",
+                    details = ex.Message
+                });
+            }
+        }
+
+        [HttpPost("test-data")]
+        public async Task<ActionResult> CreateTestData()
+        {
+            try
+            {
+                // Create a test car
+                var carDto = new CreateCarDto
+                {
+                    Make = "Tesla",
+                    Model = "Model S",
+                    Year = 2023,
+                    Description = "Luxury electric vehicle in excellent condition",
+                    StartingPrice = 50000
+                };
+
+                var car = await _carService.AddCarAsync(carDto);
+                _logger.LogInformation($"Created test car with ID: {car.Id}");
+
+                // Create a test auction
+                var auctionDto = new CreateAuctionDto
+                {
+                    CarId = car.Id,
+                    StartTime = DateTime.UtcNow,
+                    EndTime = DateTime.UtcNow.AddHours(24),
+                    StartingPrice = carDto.StartingPrice
+                };
+
+                var auction = await _auctionService.CreateAuctionAsync(auctionDto);
+                _logger.LogInformation($"Created test auction with ID: {auction.Id}");
+
+                return Ok(new { 
+                    message = "Test data created successfully",
+                    carId = car.Id,
+                    auctionId = auction.Id
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error creating test data: {ex}");
+                return StatusCode(500, new { error = ex.Message });
             }
         }
     }

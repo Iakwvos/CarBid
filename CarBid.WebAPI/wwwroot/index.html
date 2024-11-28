@@ -187,8 +187,8 @@
                         <div class="input-group">
                             <input type="text" class="form-control" id="searchInput" 
                                    placeholder="Search cars..." aria-label="Search cars">
-                            <button class="btn btn-outline-secondary" type="button" id="refreshButton">
-                                <i class="fas fa-sync-alt"></i>
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-search"></i>
                             </button>
                         </div>
                     </div>
@@ -312,31 +312,60 @@
     </div>
 
     <!-- Place Bid Modal -->
-    <div class="modal fade" id="bidModal" tabindex="-1">
+    <div class="modal fade" id="bidModal" tabindex="-1" aria-labelledby="bidModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Place Bid</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="bidModalLabel">
+                        <i class="fas fa-gavel me-2"></i>Place Bid
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="auctionId">
-                    <div class="mb-3">
-                        <label for="currentBid" class="form-label">Current Bid</label>
-                        <div id="currentBid" class="h4">$0</div>
+                    <div class="bid-stats mb-4">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-dollar-sign"></i>
+                                    </div>
+                                    <div class="stat-label">Current Bid</div>
+                                    <div class="stat-value" id="currentBid">$0</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="stat-label">Time Left</div>
+                                    <div class="stat-value" id="timeLeft">--:--:--</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="mb-3">
-                        <label for="timeLeft" class="form-label">Time Left</label>
-                        <div id="timeLeft" class="h4">--:--:--</div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="bidAmount" class="form-label">Your Bid</label>
-                        <input type="number" class="form-control" id="bidAmount" step="100">
+                        <label for="bidAmount" class="form-label fw-bold">Your Bid Amount ($)</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">
+                                <i class="fas fa-dollar-sign"></i>
+                            </span>
+                            <input type="number" class="form-control" id="bidAmount" 
+                                   step="100" required aria-label="Bid amount">
+                        </div>
+                        <small id="minBidHint" class="text-muted mt-2 d-block">
+                            <i class="fas fa-info-circle me-1"></i>Minimum bid: $0
+                        </small>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="placeBidBtn">Place Bid</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="placeBidBtn">
+                        <i class="fas fa-gavel me-2"></i>Place Bid
+                    </button>
                 </div>
             </div>
         </div>

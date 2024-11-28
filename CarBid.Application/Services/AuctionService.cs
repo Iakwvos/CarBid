@@ -67,10 +67,15 @@ namespace CarBid.Application.Services
             {
                 _logger.LogInformation("Getting active auctions");
                 var auctions = await _auctionRepository.GetAllWithIncludesAsync(a => a.Car);
-                return auctions.Where(a => 
+                _logger.LogInformation($"Found {auctions.Count()} total auctions");
+                
+                var activeAuctions = auctions.Where(a => 
                     a.IsActive && 
                     a.EndTime > DateTime.UtcNow
                 ).ToList();
+                
+                _logger.LogInformation($"Filtered to {activeAuctions.Count} active auctions");
+                return activeAuctions;
             }
             catch (Exception ex)
             {
@@ -263,11 +268,13 @@ namespace CarBid.Application.Services
                     TotalBidsToday = (await _bidRepository.GetAllAsync())
                         .Count(b => b.BidTime.Date == today),
                     
-                    TotalValueActive = activeAuctionsList
-                        .Sum(a => a.CurrentPrice),
+                    TotalValueActive = activeAuctionsList.Any() 
+                        ? activeAuctionsList.Sum(a => a.CurrentPrice) 
+                        : 0,
                     
-                    HighestActiveBid = activeAuctionsList
-                        .Max(a => a.CurrentPrice)
+                    HighestActiveBid = activeAuctionsList.Any() 
+                        ? activeAuctionsList.Max(a => a.CurrentPrice) 
+                        : 0
                 };
 
                 return stats;
