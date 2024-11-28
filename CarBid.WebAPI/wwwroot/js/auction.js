@@ -306,9 +306,7 @@ const AuctionApp = (() => {
             
             const response = await fetch('/api/auctions/bid', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify({
                     auctionId: parseInt(auctionId),
                     amount: parseFloat(bidAmount),
@@ -894,4 +892,12 @@ function animateNumber(elementId, finalValue, isCurrency = false) {
         
         element.textContent = formatValue(Math.round(currentValue));
     }, stepDuration);
+}
+
+function getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
+    };
 }
