@@ -270,5 +270,20 @@ namespace CarBid.WebAPI.Controllers
                 return StatusCode(500, "Error exporting auction data");
             }
         }
+
+        [HttpGet("stats")]
+        public async Task<ActionResult<DashboardStatsDto>> GetDashboardStats()
+        {
+            try
+            {
+                var stats = await _auctionService.GetDashboardStatsAsync();
+                return Ok(stats);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting dashboard stats: {ex}");
+                return StatusCode(500, "Error retrieving dashboard stats");
+            }
+        }
     }
 } 

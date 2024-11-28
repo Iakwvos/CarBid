@@ -237,5 +237,46 @@ namespace CarBid.Application.Services
                 throw;
             }
         }
+
+        public async Task<DashboardStatsDto> GetDashboardStatsAsync()
+        {
+            try
+            {
+                var now = DateTime.UtcNow;
+                var today = DateTime.UtcNow.Date;
+                var endingSoonThreshold = now.AddHours(4); // Auctions ending in next 4 hours
+
+                var activeAuctions = await _auctionRepository.GetAllWithIncludesAsync(a => a.Bids);
+                var activeAuctionsList = activeAuctions.Where(a => a.IsActive && a.EndTime > now).ToList();
+                
+                var stats = new DashboardStatsDto
+                {
+                    ActiveAuctionsCount = activeAuctionsList.Count,
+                    
+                    EndingSoonCount = activeAuctionsList.Count(a => 
+                        a.EndTime <= endingSoonThreshold),
+                    
+                    CompletedTodayCount = activeAuctions.Count(a => 
+                        !a.IsActive && 
+                        a.EndTime.Date == today),
+                    
+                    TotalBidsToday = (await _bidRepository.GetAllAsync())
+                        .Count(b => b.BidTime.Date == today),
+                    
+                    TotalValueActive = activeAuctionsList
+                        .Sum(a => a.CurrentPrice),
+                    
+                    HighestActiveBid = activeAuctionsList
+                        .Max(a => a.CurrentPrice)
+                };
+
+                return stats;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting dashboard stats: {ex}");
+                throw;
+            }
+        }
     }
 } 

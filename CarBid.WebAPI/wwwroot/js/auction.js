@@ -27,9 +27,13 @@ const AuctionApp = (() => {
             await initializeSignalR();
             await Promise.all([
                 loadAuctions(),
-                loadPastAuctions()
+                loadPastAuctions(),
+                loadDashboardStats()
             ]);
             startTimeUpdates();
+            
+            // Refresh stats periodically
+            setInterval(loadDashboardStats, 30000); // Refresh every 30 seconds
         } catch (error) {
             console.error('Initialization error:', error);
             showToast('Error', 'Failed to initialize application', 'error');
@@ -56,9 +60,7 @@ const AuctionApp = (() => {
                 .configureLogging(signalR.LogLevel.Information)
                 .build();
 
-            // Handle bid updates
             connection.on("BidPlaced", handleNewBid);
-            
             await connection.start();
             console.log("SignalR Connected!");
         } catch (error) {
@@ -333,20 +335,41 @@ const AuctionApp = (() => {
         // Update the auction card price
         updateAuctionPrice(bid.auctionId, bid.amount);
         
-        // Update the bid modal if it's open and showing this auction
+        // Find the auction details from our current auctions
+        const auction = currentAuctions.find(a => a.id === bid.auctionId);
+        if (!auction) return;
+
+        // Create a detailed message for the toast
+        const message = `
+            <div class="bid-notification">
+                <div class="bid-notification-header mb-2">
+                    ${auction.car.make} ${auction.car.model} (${auction.car.year})
+                </div>
+                <div class="bid-notification-details">
+                    <div class="mb-1">
+                        <span class="text-muted">Previous:</span> 
+                        <span class="previous-price">$${auction.currentPrice.toLocaleString()}</span>
+                    </div>
+                    <div class="new-price">
+                        <span class="text-muted">New Bid:</span> 
+                        <span class="fw-bold">$${bid.amount.toLocaleString()}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Update the modal if it's open and showing this auction
         const openModalAuctionId = document.getElementById('auctionId').value;
         if (openModalAuctionId && parseInt(openModalAuctionId) === bid.auctionId) {
             updateCurrentBid(bid.amount);
             updateMinBidAmount(bid.amount);
-            
-            // Show toast notification
-            showToast('New Bid', `New bid placed: $${bid.amount.toLocaleString()}`, 'info');
-            
-            // Optional: Add visual feedback
-            const currentBidElement = document.getElementById('currentBid');
-            currentBidElement.classList.add('bid-update-flash');
-            setTimeout(() => currentBidElement.classList.remove('bid-update-flash'), 1000);
         }
+
+        // Show toast with auction details
+        showToast('New Bid Placed', message, 'info');
+        
+        // Update our local auction data
+        auction.currentPrice = bid.amount;
     }
 
     // Utility Functions
@@ -364,10 +387,18 @@ const AuctionApp = (() => {
     function updateAuctionPrice(auctionId, newPrice) {
         const priceElement = document.querySelector(`.current-price[data-auction-id="${auctionId}"]`);
         if (priceElement) {
-            priceElement.textContent = `$${newPrice.toLocaleString()}`;
-            priceElement.classList.remove('price-update');
-            void priceElement.offsetWidth; // Trigger reflow
-            priceElement.classList.add('price-update');
+            const oldPrice = priceElement.textContent.replace('$', '').replace(/,/g, '');
+            priceElement.innerHTML = `
+                <div class="price-update-container">
+                    <div class="new-price">$${parseFloat(newPrice).toLocaleString()}</div>
+                    <div class="old-price">was $${parseFloat(oldPrice).toLocaleString()}</div>
+                </div>
+            `;
+            priceElement.classList.add('price-updated');
+            setTimeout(() => {
+                priceElement.classList.remove('price-updated');
+                priceElement.textContent = `$${parseFloat(newPrice).toLocaleString()}`;
+            }, 3000);
         }
     }
 
@@ -407,10 +438,31 @@ const AuctionApp = (() => {
 
     function showToast(title, message, type = 'info') {
         const toastContainer = document.querySelector('.toast-container');
+        
+        // Get icon based on type
+        let icon;
+        switch(type) {
+            case 'success':
+                icon = 'check-circle';
+                break;
+            case 'error':
+                icon = 'exclamation-circle';
+                break;
+            case 'warning':
+                icon = 'exclamation-triangle';
+                break;
+            default:
+                icon = 'info-circle';
+        }
+        
         const toastHtml = `
             <div class="toast ${type}" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="toast-header">
-                    <strong class="me-auto">${title}</strong>
+                    <div class="toast-title">
+                        <i class="fas fa-${icon} toast-icon" 
+                           style="color: var(--${type === 'error' ? 'danger' : type}-color)"></i>
+                        ${title}
+                    </div>
                     <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
                 <div class="toast-body">
@@ -421,12 +473,30 @@ const AuctionApp = (() => {
         
         toastContainer.insertAdjacentHTML('beforeend', toastHtml);
         const toastElement = toastContainer.lastElementChild;
-        const toast = new bootstrap.Toast(toastElement);
-        toast.show();
         
-        toastElement.addEventListener('hidden.bs.toast', () => {
-            toastElement.remove();
+        // Initialize Bootstrap toast
+        const toast = new bootstrap.Toast(toastElement, {
+            autohide: true,
+            delay: 5000
         });
+        
+        // Add custom animations
+        toastElement.addEventListener('show.bs.toast', () => {
+            toastElement.classList.add('showing');
+        });
+        
+        toastElement.addEventListener('hide.bs.toast', () => {
+            toastElement.classList.add('hiding');
+        });
+        
+        // Remove toast after it's hidden
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            setTimeout(() => {
+                toastElement.remove();
+            }, 300); // Match animation duration
+        });
+        
+        toast.show();
     }
 
     function showLoading(show) {
@@ -732,3 +802,54 @@ document.getElementById('exportAuctionData').addEventListener('click', async () 
         showToast('Error', 'Failed to export auction data', 'error');
     }
 });
+
+async function loadDashboardStats() {
+    try {
+        const response = await fetch('/api/auctions/stats');
+        if (!response.ok) throw new Error('Failed to fetch stats');
+        
+        const stats = await response.json();
+        
+        // Update stats with animation
+        animateNumber('activeAuctionsCount', stats.activeAuctionsCount);
+        animateNumber('totalBidsToday', stats.totalBidsToday);
+        animateNumber('endingSoonCount', stats.endingSoonCount);
+        animateNumber('highestActiveBid', stats.highestActiveBid, true);
+        
+    } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+        showToast('Error', 'Failed to load dashboard statistics', 'error');
+    }
+}
+
+function animateNumber(elementId, finalValue, isCurrency = false) {
+    const element = document.getElementById(elementId);
+    const duration = 1000; // Animation duration in milliseconds
+    const steps = 60; // Number of steps in animation
+    const stepDuration = duration / steps;
+    
+    const initialValue = 0;
+    const stepValue = (finalValue - initialValue) / steps;
+    
+    let currentStep = 0;
+    let currentValue = initialValue;
+    
+    const formatValue = (value) => {
+        if (isCurrency) {
+            return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+        return value.toLocaleString();
+    };
+    
+    const animation = setInterval(() => {
+        currentStep++;
+        currentValue += stepValue;
+        
+        if (currentStep >= steps) {
+            clearInterval(animation);
+            currentValue = finalValue;
+        }
+        
+        element.textContent = formatValue(Math.round(currentValue));
+    }, stepDuration);
+}

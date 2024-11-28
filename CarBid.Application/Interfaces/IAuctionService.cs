@@ -15,5 +15,6 @@ namespace CarBid.Application.Interfaces
         Task<AuctionDetailDto> GetAuctionDetailsAsync(int id);
         Task<Bid?> GetWinningBidAsync(int auctionId);
         Task<IEnumerable<Bid>> GetAuctionBidsAsync(int auctionId);
+        Task<DashboardStatsDto> GetDashboardStatsAsync();
     }
 } 

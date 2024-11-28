@@ -102,28 +102,36 @@
                     <div class="stat-card">
                         <i class="fas fa-gavel stat-icon"></i>
                         <h4>Active Auctions</h4>
-                        <p class="stat-value" id="activeAuctionsCount">Loading...</p>
+                        <p class="stat-value" id="activeAuctionsCount">
+                            <span class="loading-placeholder">Loading...</span>
+                        </p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card">
-                        <i class="fas fa-users stat-icon"></i>
-                        <h4>Active Bidders</h4>
-                        <p class="stat-value" id="activeBiddersCount">Loading...</p>
+                        <i class="fas fa-chart-line stat-icon"></i>
+                        <h4>Total Bids Today</h4>
+                        <p class="stat-value" id="totalBidsToday">
+                            <span class="loading-placeholder">Loading...</span>
+                        </p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card">
                         <i class="fas fa-clock stat-icon"></i>
                         <h4>Ending Soon</h4>
-                        <p class="stat-value" id="endingSoonCount">Loading...</p>
+                        <p class="stat-value" id="endingSoonCount">
+                            <span class="loading-placeholder">Loading...</span>
+                        </p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card">
                         <i class="fas fa-trophy stat-icon"></i>
-                        <h4>Completed Today</h4>
-                        <p class="stat-value" id="completedTodayCount">Loading...</p>
+                        <h4>Highest Active Bid</h4>
+                        <p class="stat-value" id="highestActiveBid">
+                            <span class="loading-placeholder">Loading...</span>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -421,7 +429,7 @@
     </div>
 
     <!-- Toast Container -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+    <div class="toast-container position-fixed"></div>
 
     <!-- Loading Overlay -->
     <div class="loading-overlay d-none" id="loadingOverlay">
