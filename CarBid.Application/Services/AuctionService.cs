@@ -31,9 +31,10 @@ namespace CarBid.Application.Services
                 var auction = new Auction
                 {
                     CarId = auctionDto.CarId,
-                    StartTime = auctionDto.StartTime,
-                    EndTime = auctionDto.EndTime,
+                    StartTime = DateTime.SpecifyKind(auctionDto.StartTime, DateTimeKind.Utc),
+                    EndTime = DateTime.SpecifyKind(auctionDto.EndTime, DateTimeKind.Utc),
                     CurrentPrice = auctionDto.StartingPrice,
+                    StartingPrice = auctionDto.StartingPrice,
                     IsActive = true
                 };
 

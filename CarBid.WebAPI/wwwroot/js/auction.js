@@ -23,6 +23,7 @@ const AuctionApp = (() => {
     async function initialize() {
         try {
             attachEventListeners();
+            initializeCreateAuction();
             await initializeSignalR();
             await Promise.all([
                 loadAuctions(),
@@ -426,6 +427,87 @@ const AuctionApp = (() => {
             element.textContent = formatTimeLeft(timeLeft);
             element.className = `time-remaining ${getUrgencyClass(timeLeft)}`;
         });
+    }
+
+    function initializeCreateAuction() {
+        // Set minimum end date to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('endDate').min = tomorrow.toISOString().slice(0, 16);
+        
+        // Set default year to current year
+        document.getElementById('carYear').value = new Date().getFullYear();
+        
+        // Add event listeners
+        document.getElementById('createAuctionModalBtn').addEventListener('click', () => {
+            const modal = new bootstrap.Modal(document.getElementById('createAuctionModal'));
+            modal.show();
+        });
+        
+        document.getElementById('createAuctionBtn').addEventListener('click', handleCreateAuction);
+    }
+
+    async function handleCreateAuction() {
+        try {
+            const startingPrice = parseFloat(document.getElementById('startingPrice').value);
+            
+            // Get form values
+            const carData = {
+                make: document.getElementById('carMake').value,
+                model: document.getElementById('carModel').value,
+                year: parseInt(document.getElementById('carYear').value),
+                description: document.getElementById('carDescription').value,
+                startingPrice: startingPrice
+            };
+
+            // Create car first
+            const carResponse = await fetch('/api/cars', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(carData)
+            });
+
+            if (!carResponse.ok) throw new Error('Failed to create car');
+            const car = await carResponse.json();
+
+            // Convert end date to UTC
+            const endDate = new Date(document.getElementById('endDate').value);
+            
+            // Create auction with the new car
+            const auctionData = {
+                carId: car.id,
+                startTime: new Date().toISOString(),
+                endTime: endDate.toISOString(),
+                startingPrice: startingPrice
+            };
+
+            const auctionResponse = await fetch('/api/auctions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(auctionData)
+            });
+
+            if (!auctionResponse.ok) throw new Error('Failed to create auction');
+
+            // Close modal and refresh auctions
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createAuctionModal'));
+            modal.hide();
+            
+            // Reset form
+            document.getElementById('createAuctionForm').reset();
+            
+            // Show success message and refresh
+            showToast('Success', 'Auction created successfully!', 'success');
+            await loadAuctions();
+
+        } catch (error) {
+            console.error('Error creating auction:', error);
+            showToast('Error', error.message, 'error');
+        }
     }
 
     // Public API

@@ -15,6 +15,7 @@ namespace CarBid.Domain.Entities
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public decimal CurrentPrice { get; set; }
+        public decimal StartingPrice { get; set; }
         public bool IsActive { get; set; }
         
         [JsonIgnore]
