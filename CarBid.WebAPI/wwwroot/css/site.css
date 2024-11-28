@@ -136,3 +136,54 @@
     border-radius: 4px;
     font-size: 0.875rem;
 } 
+/* Time Left Styling */
+#timeLeft {
+    transition: color 0.3s ease;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+#timeLeft.text-danger {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+.bid-button:disabled {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.time-remaining.ended {
+    color: #dc3545;
+    font-weight: bold;
+}
+/* Bid update animation */
+.bid-update-flash {
+    animation: bidFlash 1s ease;
+}
+
+@keyframes bidFlash {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); color: #2ecc71; }
+    100% { transform: scale(1); }
+}
+
+/* Current bid styling */
+#currentBid {
+    transition: all 0.3s ease;
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+/* Minimum bid hint */
+.min-bid-hint {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.SignalR;
 using CarBid.WebAPI.Hubs;
 using System.Text.Json.Serialization;
 using Swashbuckle.AspNetCore.Swagger;
+using CarBid.WebAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,6 +58,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+builder.Services.AddHostedService<AuctionEndingService>();
 
 var app = builder.Build();
 

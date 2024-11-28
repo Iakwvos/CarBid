@@ -87,6 +87,16 @@ namespace CarBid.Application.Services
                 if (auction == null)
                     throw new Exception("Auction not found");
 
+                if (DateTime.UtcNow >= auction.EndTime)
+                {
+                    if (auction.IsActive)
+                    {
+                        auction.IsActive = false;
+                        await _auctionRepository.UpdateAsync(auction);
+                    }
+                    throw new Exception("This auction has ended");
+                }
+
                 if (!auction.IsActive)
                     throw new Exception("Auction is not active");
 

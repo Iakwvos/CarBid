@@ -56,7 +56,9 @@ const AuctionApp = (() => {
                 .configureLogging(signalR.LogLevel.Information)
                 .build();
 
+            // Handle bid updates
             connection.on("BidPlaced", handleNewBid);
+            
             await connection.start();
             console.log("SignalR Connected!");
         } catch (error) {
@@ -125,6 +127,7 @@ const AuctionApp = (() => {
         col.className = 'col-md-4 mb-4';
         
         const timeLeft = getTimeLeft(auction.endTime);
+        const isEnded = timeLeft.total <= 0;
         const urgencyClass = getUrgencyClass(timeLeft);
 
         col.innerHTML = `
@@ -156,8 +159,9 @@ const AuctionApp = (() => {
                     </p>
                     <button class="btn btn-primary bid-button w-100 open-bid-modal" 
                             data-auction-id="${auction.id}" 
-                            data-current-price="${auction.currentPrice}">
-                        <i class="fas fa-gavel me-2"></i>Place Bid
+                            data-current-price="${auction.currentPrice}"
+                            ${isEnded ? 'disabled' : ''}>
+                        <i class="fas fa-gavel me-2"></i>${isEnded ? 'Auction Ended' : 'Place Bid'}
                     </button>
                 </div>
             </div>
@@ -207,7 +211,7 @@ const AuctionApp = (() => {
     // Bidding Functions
     function handleBidButtonClick(e) {
         const bidButton = e.target.closest('.open-bid-modal');
-        if (!bidButton) return;
+        if (!bidButton || bidButton.disabled) return;
         
         const auctionId = bidButton.dataset.auctionId;
         const currentPrice = bidButton.dataset.currentPrice;
@@ -217,20 +221,77 @@ const AuctionApp = (() => {
     function openBidModal(auctionId, currentPrice) {
         const auction = currentAuctions.find(a => a.id === parseInt(auctionId));
         if (!auction) return;
-
+    
         const modal = new bootstrap.Modal(DOM.bidModal);
         
         DOM.auctionId.value = auctionId;
-        DOM.currentBid.textContent = `$${parseFloat(currentPrice).toLocaleString()}`;
+        updateCurrentBid(currentPrice);
         
+        updateMinBidAmount(currentPrice);
+        
+        // Initial time update
+        updateBidModalTimer(auction.endTime);
+        
+        // Start timer update interval
+        const timerInterval = setInterval(() => {
+            updateBidModalTimer(auction.endTime);
+        }, 1000);
+        
+        // Join auction-specific SignalR group
+        if (connection) {
+            connection.invoke("JoinAuction", auctionId)
+                .catch(err => console.error("Error joining auction group:", err));
+        }
+        
+        // Clear interval and leave auction group when modal is closed
+        DOM.bidModal.addEventListener('hidden.bs.modal', () => {
+            clearInterval(timerInterval);
+            if (connection) {
+                connection.invoke("LeaveAuction", auctionId)
+                    .catch(err => console.error("Error leaving auction group:", err));
+            }
+        }, { once: true });
+        
+        modal.show();
+    }
+    
+    function updateCurrentBid(amount) {
+        DOM.currentBid.textContent = `$${parseFloat(amount).toLocaleString()}`;
+    }
+
+    function updateMinBidAmount(currentPrice) {
         const minBid = parseFloat(currentPrice) + 100;
         DOM.bidAmount.min = minBid;
         DOM.bidAmount.value = minBid;
         
-        const timeLeft = getTimeLeft(auction.endTime);
-        DOM.timeLeft.textContent = formatTimeLeft(timeLeft);
+        // Update the minimum bid hint
+        const minBidHint = document.getElementById('minBidHint');
+        if (minBidHint) {
+            minBidHint.textContent = `Minimum bid: $${minBid.toLocaleString()}`;
+        }
+    }
+    
+    function updateBidModalTimer(endTime) {
+        const timeLeft = getTimeLeft(endTime);
+        const timeLeftElement = document.getElementById('timeLeft');
         
-        modal.show();
+        if (timeLeft.total <= 0) {
+            timeLeftElement.textContent = 'Auction ended';
+            timeLeftElement.classList.remove('text-success', 'text-warning');
+            timeLeftElement.classList.add('text-danger');
+        } else {
+            timeLeftElement.textContent = formatTimeLeft(timeLeft);
+            
+            // Update color based on time remaining
+            timeLeftElement.classList.remove('text-success', 'text-warning', 'text-danger');
+            if (timeLeft.hours < 1) {
+                timeLeftElement.classList.add('text-danger');
+            } else if (timeLeft.hours < 4) {
+                timeLeftElement.classList.add('text-warning');
+            } else {
+                timeLeftElement.classList.add('text-success');
+            }
+        }
     }
 
     async function handleBidSubmission() {
@@ -269,8 +330,23 @@ const AuctionApp = (() => {
     }
 
     function handleNewBid(bid) {
+        // Update the auction card price
         updateAuctionPrice(bid.auctionId, bid.amount);
-        showToast('New Bid', `New bid placed: $${bid.amount.toLocaleString()}`, 'info');
+        
+        // Update the bid modal if it's open and showing this auction
+        const openModalAuctionId = document.getElementById('auctionId').value;
+        if (openModalAuctionId && parseInt(openModalAuctionId) === bid.auctionId) {
+            updateCurrentBid(bid.amount);
+            updateMinBidAmount(bid.amount);
+            
+            // Show toast notification
+            showToast('New Bid', `New bid placed: $${bid.amount.toLocaleString()}`, 'info');
+            
+            // Optional: Add visual feedback
+            const currentBidElement = document.getElementById('currentBid');
+            currentBidElement.classList.add('bid-update-flash');
+            setTimeout(() => currentBidElement.classList.remove('bid-update-flash'), 1000);
+        }
     }
 
     // Utility Functions
@@ -299,6 +375,15 @@ const AuctionApp = (() => {
         const end = new Date(endTime);
         const now = new Date();
         const diff = end - now;
+
+        if (diff <= 0) {
+            return {
+                hours: 0,
+                minutes: 0,
+                seconds: 0,
+                total: 0
+            };
+        }
 
         return {
             hours: Math.floor(diff / (1000 * 60 * 60)),

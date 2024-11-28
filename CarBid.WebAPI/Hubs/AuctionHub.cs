@@ -68,7 +68,8 @@ namespace CarBid.WebAPI.Hubs
                     bid.AuctionId,
                     bid.Amount,
                     bid.BidderId,
-                    bid.BidTime
+                    bid.BidTime,
+                    FormattedTime = bid.BidTime.ToString("HH:mm:ss")
                 });
         }
     }
