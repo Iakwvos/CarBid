@@ -765,7 +765,9 @@ const AuctionApp = (() => {
                 title: document.getElementById('auctionDetailTitle'),
                 price: document.getElementById('auctionDetailCurrentPrice'),
                 description: document.getElementById('auctionDetailDescription'),
-                bidHistory: document.getElementById('bidHistoryBody')
+                bidHistory: document.getElementById('bidHistoryBody'),
+                winner: document.getElementById('auctionWinner'),
+                totalBids: document.getElementById('totalBids')
             };
 
             const missingElements = Object.entries(modalElements)
@@ -785,31 +787,68 @@ const AuctionApp = (() => {
             const carTitle = car ? `${car.make} ${car.model} (${car.year})` : 'Car Details Not Available';
             const carDescription = car?.description || 'No description available';
             const currentPrice = details?.auction?.currentPrice || 0;
+            const winnerName = details?.winningBid?.bidderId || 'No Winner';
 
+            // Update modal content
             modalElements.title.textContent = carTitle;
             modalElements.description.textContent = carDescription;
             modalElements.price.textContent = `$${currentPrice.toLocaleString()}`;
+            modalElements.winner.textContent = winnerName;
             
             if (Array.isArray(details.bidHistory)) {
                 const sortedBids = details.bidHistory.sort((a, b) => 
                     new Date(b.bidTime) - new Date(a.bidTime)
                 );
 
+                modalElements.totalBids.textContent = `${sortedBids.length} Bids`;
+
                 const bidHistoryHtml = sortedBids.length > 0 
                     ? sortedBids.map(bid => `
-                        <tr ${bid.id === details?.winningBid?.id ? 'class="table-success"' : ''}>
-                            <td>${new Date(bid.bidTime).toLocaleString()}</td>
-                            <td>$${bid.amount.toLocaleString()}</td>
-                            <td>${bid.bidderId}</td>
+                        <tr class="bid-row">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-clock me-2 text-muted"></i>
+                                    <div>
+                                        <div class="fw-medium">${new Date(bid.bidTime).toLocaleDateString()}</div>
+                                        <small class="text-muted">${new Date(bid.bidTime).toLocaleTimeString()}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="bid-amount">$${bid.amount.toLocaleString()}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-person-circle me-2"></i>
+                                    <span class="fw-medium">${bid.bidderId}</span>
+                                </div>
+                            </td>
+                            <td>
+                                ${bid.id === details?.winningBid?.id 
+                                    ? '<span class="badge bg-success"><i class="bi bi-trophy-fill me-1"></i>Winner</span>' 
+                                    : '<span class="badge bg-secondary"><i class="bi bi-x-circle me-1"></i>Outbid</span>'
+                                }
+                            </td>
                         </tr>
                     `).join('')
-                    : `<tr><td colspan="3" class="text-center">No bids have been placed yet</td></tr>`;
+                    : `<tr>
+                        <td colspan="4" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="bi bi-inbox-fill h3 mb-3 d-block"></i>
+                                <p class="mb-0">No bids have been placed on this auction</p>
+                            </div>
+                        </td>
+                    </tr>`;
 
                 modalElements.bidHistory.innerHTML = bidHistoryHtml;
             } else {
+                modalElements.totalBids.textContent = '0 Bids';
                 modalElements.bidHistory.innerHTML = `
                     <tr>
-                        <td colspan="3" class="text-center">Bid history unavailable</td>
+                        <td colspan="4" class="text-center py-4">
+                            <i class="bi bi-exclamation-circle text-warning me-2"></i>
+                            Bid history unavailable
+                        </td>
                     </tr>
                 `;
             }
@@ -921,7 +960,7 @@ function displayAuctionDetails(details) {
                             <tr class="${bid.id === winningBid?.id ? 'table-success' : ''}">
                                 <td>${new Date(bid.bidTime).toLocaleString()}</td>
                                 <td>$${bid.amount.toLocaleString()}</td>
-                                <td>${bid.bidderId || 'Anonymous'}</td>
+                                <td>${bid.bidderId}</td>
                                 <td>${bid.id === winningBid?.id ? 
                                     '<span class="badge bg-success">Winner</span>' : 
                                     '<span class="badge bg-secondary">Bid</span>'}

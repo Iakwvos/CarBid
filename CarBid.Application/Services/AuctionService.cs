@@ -5,6 +5,9 @@ using CarBid.Domain.Entities;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.SignalR;
 
 namespace CarBid.Application.Services
 {
@@ -13,15 +16,18 @@ namespace CarBid.Application.Services
         private readonly IRepository<Auction> _auctionRepository;
         private readonly IRepository<Bid> _bidRepository;
         private readonly ILogger<AuctionService> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         public AuctionService(
             IRepository<Auction> auctionRepository,
             IRepository<Bid> bidRepository,
-            ILogger<AuctionService> logger)
+            ILogger<AuctionService> logger,
+            UserManager<ApplicationUser> userManager)
         {
             _auctionRepository = auctionRepository;
             _bidRepository = bidRepository;
             _logger = logger;
+            _userManager = userManager;
         }
 
         public async Task<Auction> CreateAuctionAsync(CreateAuctionDto auctionDto)
@@ -167,12 +173,47 @@ namespace CarBid.Application.Services
         {
             try
             {
-                var auction = await _auctionRepository.GetByIdAsync(id);
+                var auctions = await _auctionRepository.GetAllWithIncludesAsync(a => a.Car);
+                var auction = auctions.FirstOrDefault(a => a.Id == id);
+                
                 if (auction == null)
-                    throw new Exception("Auction not found");
+                    throw new Exception($"Auction with ID {id} not found");
 
-                var bids = await GetAuctionBidsAsync(id);
-                var winningBid = await GetWinningBidAsync(id);
+                var allBids = await _bidRepository.GetAllAsync();
+                var auctionBids = allBids
+                    .Where(b => b.AuctionId == id)
+                    .OrderByDescending(b => b.BidTime)
+                    .ToList();
+
+                var winningBid = auctionBids
+                    .OrderByDescending(b => b.Amount)
+                    .FirstOrDefault();
+
+                var userDict = new Dictionary<string, string>();
+                
+                foreach(var bid in auctionBids)
+                {
+                    var userId = bid.ApplicationUserId ?? bid.BidderId;
+                    
+                    if (!userDict.ContainsKey(userId))
+                    {
+                        var user = await _userManager.FindByIdAsync(userId);
+                        userDict[userId] = user != null 
+                            ? $"{user.FirstName} {user.LastName}".Trim()
+                            : "Unknown User";
+                    }
+                }
+
+                var bidDtos = auctionBids.Select(b => new BidDto
+                {
+                    Id = b.Id,
+                    AuctionId = b.AuctionId,
+                    Amount = b.Amount,
+                    BidTime = b.BidTime,
+                    BidderId = userDict.GetValueOrDefault(b.ApplicationUserId ?? b.BidderId, "Unknown User")
+                }).ToList();
+
+                var winningBidDto = winningBid != null ? bidDtos.First(b => b.Id == winningBid.Id) : null;
 
                 return new AuctionDetailDto
                 {
@@ -180,7 +221,11 @@ namespace CarBid.Application.Services
                     {
                         Id = auction.Id,
                         CurrentPrice = auction.CurrentPrice,
+                        StartingPrice = auction.StartingPrice,
+                        StartTime = auction.StartTime,
                         EndTime = auction.EndTime,
+                        IsActive = auction.IsActive,
+                        TotalBids = auctionBids.Count(),
                         Car = auction.Car != null ? new CarDto
                         {
                             Id = auction.Car.Id,
@@ -188,24 +233,11 @@ namespace CarBid.Application.Services
                             Model = auction.Car.Model,
                             Year = auction.Car.Year,
                             Description = auction.Car.Description
-                        } : null
+                        } : null,
+                        WinningBid = winningBidDto
                     },
-                    BidHistory = bids.Select(b => new BidDto
-                    {
-                        Id = b.Id,
-                        AuctionId = b.AuctionId,
-                        Amount = b.Amount,
-                        BidTime = b.BidTime,
-                        BidderId = b.BidderId
-                    }).ToList(),
-                    WinningBid = winningBid != null ? new BidDto
-                    {
-                        Id = winningBid.Id,
-                        AuctionId = winningBid.AuctionId,
-                        Amount = winningBid.Amount,
-                        BidTime = winningBid.BidTime,
-                        BidderId = winningBid.BidderId
-                    } : null
+                    BidHistory = bidDtos,
+                    WinningBid = winningBidDto
                 };
             }
             catch (Exception ex)

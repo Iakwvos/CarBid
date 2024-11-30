@@ -485,34 +485,65 @@
     <div class="modal fade" id="auctionDetailModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="auctionDetailTitle"></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-3">
+                    <!-- Auction Summary Section -->
+                    <div class="row mb-4">
                         <div class="col-md-6">
-                            <h6>Final Price</h6>
-                            <p id="auctionDetailCurrentPrice" class="h4"></p>
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Final Price</h6>
+                                    <p id="auctionDetailCurrentPrice" class="h2 mb-0 text-primary"></p>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <h6>Description</h6>
-                            <p id="auctionDetailDescription"></p>
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-muted">Vehicle Details</h6>
+                                    <p id="auctionDetailDescription" class="mb-0"></p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Amount</th>
-                                    <th>Bidder</th>
-                                </tr>
-                            </thead>
-                            <tbody id="bidHistoryBody">
-                            </tbody>
-                        </table>
+
+                    <!-- Winner Section -->
+                    <div class="card mb-4 bg-success text-white" id="winnerCard">
+                        <div class="card-body d-flex align-items-center">
+                            <i class="bi bi-trophy-fill me-3 h3 mb-0"></i>
+                            <div>
+                                <h6 class="card-subtitle mb-1">Auction Winner</h6>
+                                <p class="h5 mb-0" id="auctionWinner"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bid History Section -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="bi bi-clock-history me-2"></i>
+                                Bid History
+                            </h6>
+                            <span class="badge bg-primary" id="totalBids"></span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Amount</th>
+                                        <th>Bidder</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bidHistoryBody">
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
