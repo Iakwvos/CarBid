@@ -1,3 +1,20 @@
+document.addEventListener('DOMContentLoaded', () => {
+    // Verify modal elements are present
+    const modalCheck = {
+        modal: !!document.getElementById('auctionDetailModal'),
+        title: !!document.getElementById('auctionDetailTitle'),
+        price: !!document.getElementById('auctionDetailCurrentPrice'),
+        description: !!document.getElementById('auctionDetailDescription'),
+        bidHistory: !!document.getElementById('bidHistoryBody')
+    };
+    
+    console.log('Modal elements check on page load:', modalCheck);
+    
+    if (!Object.values(modalCheck).every(Boolean)) {
+        console.error('Some modal elements are missing on page load!');
+    }
+});
+
 const AuctionApp = (() => {
     // State management
     let connection = null;
@@ -5,7 +22,6 @@ const AuctionApp = (() => {
     let pastAuctions = [];
     let DOM = {};
 
-    // Initialize application
     async function initialize() {
         try {
             // Initialize DOM elements
@@ -20,30 +36,34 @@ const AuctionApp = (() => {
                 bidAmount: document.getElementById('bidAmount'),
                 currentBid: document.getElementById('currentBid'),
                 timeLeft: document.getElementById('timeLeft'),
-                auctionId: document.getElementById('auctionId')
+                auctionId: document.getElementById('auctionId'),
+                blurOverlay: document.getElementById('auctionsBlurOverlay')
             };
 
-            // Log missing elements
-            const missingElements = Object.entries(DOM)
-                .filter(([key, value]) => !value)
-                .map(([key]) => key);
+            // Check authentication state
+            const isAuthenticated = AuthService.getCurrentUser() !== null;
             
-            if (missingElements.length > 0) {
-                console.warn('Missing DOM elements:', missingElements);
+            if (isAuthenticated && DOM.blurOverlay) {
+                DOM.blurOverlay.classList.add('d-none');
             }
 
             await initializeSignalR();
             attachEventListeners();
-            await Promise.all([
-                loadAuctions(),
-                loadPastAuctions(),
-                loadDashboardStats()
-            ]);
+            
+            // Load data based on auth state
+            if (isAuthenticated) {
+                await Promise.all([
+                    loadAuctions(),
+                    loadPastAuctions(),
+                    loadDashboardStats()
+                ]);
+            } else {
+                displayPlaceholderAuctions();
+                await loadDashboardStats(); // Still load public stats
+            }
             
             startTimeUpdates();
-            
-            // Refresh stats periodically
-            setInterval(loadDashboardStats, 30000); // Refresh every 30 seconds
+            setInterval(loadDashboardStats, 30000);
             showDebugInfo();
         } catch (error) {
             console.error('Initialization error:', error);
@@ -102,6 +122,9 @@ const AuctionApp = (() => {
 
     // Auction Loading and Display
     async function loadAuctions() {
+        if (!AuthService.getCurrentUser()) {
+            return;
+        }
         showLoading(true);
         try {
             console.log('Loading auctions...');
@@ -145,6 +168,9 @@ const AuctionApp = (() => {
     }
 
     async function loadPastAuctions() {
+        if (!AuthService.getCurrentUser()) {
+            return;
+        }
         showLoading(true);
         try {
             const response = await fetch('/api/auctions/past');
@@ -734,28 +760,103 @@ const AuctionApp = (() => {
     // Add this new function alongside other functions but before the return statement
     async function showAuctionDetails(auctionId) {
         try {
-            showLoading(true);
+            const modalElements = {
+                modal: document.getElementById('auctionDetailModal'),
+                title: document.getElementById('auctionDetailTitle'),
+                price: document.getElementById('auctionDetailCurrentPrice'),
+                description: document.getElementById('auctionDetailDescription'),
+                bidHistory: document.getElementById('bidHistoryBody')
+            };
+
+            const missingElements = Object.entries(modalElements)
+                .filter(([key, element]) => !element)
+                .map(([key]) => key);
+
+            if (missingElements.length > 0) {
+                throw new Error(`Missing modal elements: ${missingElements.join(', ')}`);
+            }
+
             const response = await fetch(`/api/auctions/${auctionId}/details`);
             if (!response.ok) throw new Error('Failed to fetch auction details');
             
             const details = await response.json();
-            displayAuctionDetails(details);
             
-            const modal = new bootstrap.Modal(document.getElementById('auctionDetailModal'));
+            const car = details?.auction?.car;
+            const carTitle = car ? `${car.make} ${car.model} (${car.year})` : 'Car Details Not Available';
+            const carDescription = car?.description || 'No description available';
+            const currentPrice = details?.auction?.currentPrice || 0;
+
+            modalElements.title.textContent = carTitle;
+            modalElements.description.textContent = carDescription;
+            modalElements.price.textContent = `$${currentPrice.toLocaleString()}`;
+            
+            if (Array.isArray(details.bidHistory)) {
+                const sortedBids = details.bidHistory.sort((a, b) => 
+                    new Date(b.bidTime) - new Date(a.bidTime)
+                );
+
+                const bidHistoryHtml = sortedBids.length > 0 
+                    ? sortedBids.map(bid => `
+                        <tr ${bid.id === details?.winningBid?.id ? 'class="table-success"' : ''}>
+                            <td>${new Date(bid.bidTime).toLocaleString()}</td>
+                            <td>$${bid.amount.toLocaleString()}</td>
+                            <td>${bid.bidderId}</td>
+                        </tr>
+                    `).join('')
+                    : `<tr><td colspan="3" class="text-center">No bids have been placed yet</td></tr>`;
+
+                modalElements.bidHistory.innerHTML = bidHistoryHtml;
+            } else {
+                modalElements.bidHistory.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="text-center">Bid history unavailable</td>
+                    </tr>
+                `;
+            }
+            
+            const modal = new bootstrap.Modal(modalElements.modal);
             modal.show();
+
         } catch (error) {
-            console.error('Error loading auction details:', error);
-            showToast('Error', 'Failed to load auction details', 'error');
-        } finally {
-            showLoading(false);
+            showToast('Error', `Failed to load auction details: ${error.message}`, 'error');
+        }
+    }
+
+    // Add new function to display placeholder content
+    function displayPlaceholderAuctions() {
+        if (DOM.auctionsContainer) {
+            DOM.auctionsContainer.innerHTML = Array(6).fill(0).map(() => `
+                <div class="col-md-4">
+                    <div class="auction-card">
+                        <div class="card-body">
+                            <h5 class="card-title placeholder-glow">
+                                <span class="placeholder col-6"></span>
+                            </h5>
+                            <p class="card-text placeholder-glow">
+                                <span class="placeholder col-7"></span>
+                                <span class="placeholder col-4"></span>
+                                <span class="placeholder col-4"></span>
+                                <span class="placeholder col-6"></span>
+                                <span class="placeholder col-8"></span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        if (DOM.blurOverlay) {
+            DOM.blurOverlay.classList.remove('d-none');
         }
     }
 
     // In the return statement, add showAuctionDetails while keeping existing returns
     return {
         initialize,
-        openBidModal,
-        showAuctionDetails
+        loadAuctions,
+        loadPastAuctions,
+        handleNewBid,
+        showAuctionDetails,
     };
 })();
 

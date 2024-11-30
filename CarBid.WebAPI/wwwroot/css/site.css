@@ -910,3 +910,33 @@ body {
 .table tr.table-success:hover {
     background-color: rgba(16, 185, 129, 0.15) !important;
 }
+
+.blur-overlay-container {
+    position: relative;
+}
+
+.blur-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    backdrop-filter: blur(8px);
+    background-color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 2rem;
+    text-align: center;
+}
+
+.blur-overlay h3 {
+    color: var(--gray-900);
+    margin-bottom: 1.5rem;
+}
+
+.blur-overlay .btn {
+    min-width: 200px;
+}

@@ -1,6 +1,6 @@
 const AuthService = (() => {
     // State
-    let currentUser = null;
+    let currentUser = JSON.parse(localStorage.getItem('user')) || null;
     let authToken = localStorage.getItem('authToken');
 
     // DOM Elements
@@ -15,27 +15,27 @@ const AuthService = (() => {
 
     function attachEventListeners() {
         // Login form submission
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             await handleLogin();
         });
 
         // Register form submission
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             await handleRegister();
         });
 
         // Logout button
-        document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+        document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
 
         // Switch between login and register modals
-        document.getElementById('switchToRegister').addEventListener('click', () => {
+        document.getElementById('switchToRegister')?.addEventListener('click', () => {
             loginModal.hide();
             registerModal.show();
         });
 
-        document.getElementById('switchToLogin').addEventListener('click', () => {
+        document.getElementById('switchToLogin')?.addEventListener('click', () => {
             registerModal.hide();
             loginModal.show();
         });
@@ -112,7 +112,15 @@ const AuthService = (() => {
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
         currentUser = null;
+        authToken = null;
+        
+        const blurOverlay = document.getElementById('auctionsBlurOverlay');
+        if (blurOverlay) {
+            blurOverlay.classList.remove('d-none');
+        }
+        
         updateUIForAuth();
+        AuctionApp.initialize(); // Reload with placeholder content
         showToast('Success', 'Logged out successfully', 'success');
     }
 
@@ -121,14 +129,28 @@ const AuthService = (() => {
         localStorage.setItem('refreshToken', data.refreshToken);
         localStorage.setItem('user', JSON.stringify(data.user));
         currentUser = data.user;
+        authToken = data.token;
+        
+        const blurOverlay = document.getElementById('auctionsBlurOverlay');
+        if (blurOverlay) {
+            blurOverlay.classList.add('d-none');
+        }
+        
         updateUIForAuth();
+        AuctionApp.initialize(); // Reload auctions after login
     }
 
     function checkAuthStatus() {
         const user = localStorage.getItem('user');
         if (user) {
             currentUser = JSON.parse(user);
+            authToken = localStorage.getItem('authToken');
             updateUIForAuth();
+            
+            const blurOverlay = document.getElementById('auctionsBlurOverlay');
+            if (blurOverlay) {
+                blurOverlay.classList.add('d-none');
+            }
         }
     }
 

@@ -203,8 +203,21 @@
                 </div>
 
                 <!-- Auctions Grid -->
-                <div id="auctionsContainer" class="row g-4">
-                    <!-- Auctions will be loaded here -->
+                <div class="blur-overlay-container">
+                    <div id="auctionsContainer" class="row g-4">
+                        <!-- Auctions will be loaded here -->
+                    </div>
+                    
+                    <div id="auctionsBlurOverlay" class="blur-overlay d-none">
+                        <h3>Want to take part in your first auction?</h3>
+                        <p class="mb-4">Join our community of car enthusiasts and start bidding on exclusive vehicles.</p>
+                        <button class="btn btn-primary mb-3" onclick="AuthService.showLoginModal()">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="AuthService.showRegisterModal()">
+                            <i class="fas fa-user-plus me-2"></i>Register
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -470,40 +483,36 @@
 
     <!-- Add this after your existing modals -->
     <div class="modal fade" id="auctionDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-history me-2"></i>
-                        <span id="detailCarTitle"></span>
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="auctionDetailTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-4">
+                    <div class="row mb-3">
                         <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2 text-muted">Final Price</h6>
-                                    <h4 id="detailFinalPrice" class="mb-0"></h4>
-                                </div>
-                            </div>
+                            <h6>Final Price</h6>
+                            <p id="auctionDetailCurrentPrice" class="h4"></p>
                         </div>
                         <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2 text-muted">Description</h6>
-                                    <p id="detailCarDescription" class="mb-0"></p>
-                                </div>
-                            </div>
+                            <h6>Description</h6>
+                            <p id="auctionDetailDescription"></p>
                         </div>
                     </div>
                     
-                    <h6 class="mb-3">
-                        <i class="fas fa-list me-2"></i>Bid History
-                    </h6>
-                    <div id="bidHistoryContainer">
-                        <!-- Bid history will be populated here -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Amount</th>
+                                    <th>Bidder</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bidHistoryBody">
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 <div class="modal-footer">
