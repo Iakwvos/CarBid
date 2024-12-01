@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using CarBid.Domain.Entities;
+using Npgsql;
 
 namespace CarBid.Infrastructure.Data
 {
@@ -11,6 +12,27 @@ namespace CarBid.Infrastructure.Data
         {
         }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                var connectionString = new NpgsqlConnectionStringBuilder
+                {
+                    Host = "database-1.cnwwiyo68evh.us-east-1.rds.amazonaws.com",
+                    Database = "carbid",
+                    Username = "postgres",
+                    Password = "Kubajunki1!",
+                    Port = 5432,
+                    SslMode = SslMode.Require,
+                    Pooling = true,
+                    MinPoolSize = 1,
+                    MaxPoolSize = 20
+                }.ToString();
+
+                optionsBuilder.UseNpgsql(connectionString);
+            }
+        }
+
         public DbSet<Car> Cars => Set<Car>();
         public DbSet<Auction> Auctions => Set<Auction>();
         public DbSet<Bid> Bids => Set<Bid>();
@@ -19,17 +41,7 @@ namespace CarBid.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Auction>()
-                .HasOne(a => a.Car)
-                .WithMany(c => c.Auctions)
-                .HasForeignKey(a => a.CarId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Bid>()
-                .HasOne(b => b.Auction)
-                .WithMany(a => a.Bids)
-                .HasForeignKey(b => b.AuctionId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.HasDefaultSchema("public");
         }
     }
 } 

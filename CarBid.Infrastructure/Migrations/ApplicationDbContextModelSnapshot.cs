@@ -17,6 +17,7 @@ namespace CarBid.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("public")
                 .HasAnnotation("ProductVersion", "8.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -106,7 +107,7 @@ namespace CarBid.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
-                    b.ToTable("AspNetUsers", (string)null);
+                    b.ToTable("AspNetUsers", "public");
                 });
 
             modelBuilder.Entity("CarBid.Domain.Entities.Auction", b =>
@@ -144,7 +145,7 @@ namespace CarBid.Infrastructure.Migrations
 
                     b.HasIndex("CarId");
 
-                    b.ToTable("Auctions");
+                    b.ToTable("Auctions", "public");
                 });
 
             modelBuilder.Entity("CarBid.Domain.Entities.Bid", b =>
@@ -177,7 +178,7 @@ namespace CarBid.Infrastructure.Migrations
 
                     b.HasIndex("AuctionId");
 
-                    b.ToTable("Bids");
+                    b.ToTable("Bids", "public");
                 });
 
             modelBuilder.Entity("CarBid.Domain.Entities.Car", b =>
@@ -208,7 +209,7 @@ namespace CarBid.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Cars");
+                    b.ToTable("Cars", "public");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -234,7 +235,7 @@ namespace CarBid.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("RoleNameIndex");
 
-                    b.ToTable("AspNetRoles", (string)null);
+                    b.ToTable("AspNetRoles", "public");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -259,7 +260,7 @@ namespace CarBid.Infrastructure.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims", (string)null);
+                    b.ToTable("AspNetRoleClaims", "public");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -284,7 +285,7 @@ namespace CarBid.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserClaims", (string)null);
+                    b.ToTable("AspNetUserClaims", "public");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -306,7 +307,7 @@ namespace CarBid.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins", (string)null);
+                    b.ToTable("AspNetUserLogins", "public");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -321,7 +322,7 @@ namespace CarBid.Infrastructure.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUserRoles", (string)null);
+                    b.ToTable("AspNetUserRoles", "public");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -340,7 +341,7 @@ namespace CarBid.Infrastructure.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens", (string)null);
+                    b.ToTable("AspNetUserTokens", "public");
                 });
 
             modelBuilder.Entity("CarBid.Domain.Entities.Auction", b =>
@@ -352,7 +353,7 @@ namespace CarBid.Infrastructure.Migrations
                     b.HasOne("CarBid.Domain.Entities.Car", "Car")
                         .WithMany("Auctions")
                         .HasForeignKey("CarId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Car");
@@ -360,7 +361,7 @@ namespace CarBid.Infrastructure.Migrations
 
             modelBuilder.Entity("CarBid.Domain.Entities.Bid", b =>
                 {
-                    b.HasOne("CarBid.Domain.Entities.ApplicationUser", null)
+                    b.HasOne("CarBid.Domain.Entities.ApplicationUser", "ApplicationUser")
                         .WithMany("Bids")
                         .HasForeignKey("ApplicationUserId");
 
@@ -369,6 +370,8 @@ namespace CarBid.Infrastructure.Migrations
                         .HasForeignKey("AuctionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("ApplicationUser");
 
                     b.Navigation("Auction");
                 });
