@@ -10,12 +10,14 @@ namespace CarBid.Domain.Entities
         }
 
         public int Id { get; set; }
-        public int CarId { get; set; }
-        public virtual Car Car { get; set; } = null!;
+        public string Make { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
+        public int Year { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public decimal StartingPrice { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public decimal CurrentPrice { get; set; }
-        public decimal StartingPrice { get; set; }
         public bool IsActive { get; set; }
         
         [JsonIgnore]

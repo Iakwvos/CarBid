@@ -180,31 +180,5 @@ namespace CarBid.Application.Services
                 Created = user.Created
             };
         }
-
-        // Implement other interface methods...
-        public Task<AuthResponseDto> RefreshTokenAsync(string token, string refreshToken)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> LogoutAsync(string userId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<UserDto?> GetUserByIdAsync(string userId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> UpdateUserProfileAsync(string userId, UserDto updatedProfile)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

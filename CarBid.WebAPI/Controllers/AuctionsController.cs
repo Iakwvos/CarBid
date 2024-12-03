@@ -12,18 +12,15 @@ namespace CarBid.WebAPI.Controllers
     public class AuctionsController : ControllerBase
     {
         private readonly IAuctionService _auctionService;
-        private readonly ICarService _carService;
         private readonly IHubContext<AuctionHub> _hubContext;
         private readonly ILogger<AuctionsController> _logger;
 
         public AuctionsController(
             IAuctionService auctionService,
-            ICarService carService,
             IHubContext<AuctionHub> hubContext,
             ILogger<AuctionsController> logger)
         {
             _auctionService = auctionService;
-            _carService = carService;
             _hubContext = hubContext;
             _logger = logger;
         }
@@ -39,7 +36,7 @@ namespace CarBid.WebAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"Error creating auction: {ex.Message}");
-                return StatusCode(500, "Error creating auction");
+                return StatusCode(500, new { error = ex.Message });
             }
         }
 
@@ -119,14 +116,10 @@ namespace CarBid.WebAPI.Controllers
                     StartTime = a.StartTime,
                     EndTime = a.EndTime,
                     IsActive = a.IsActive,
-                    Car = a.Car != null ? new CarDto
-                    {
-                        Id = a.Car.Id,
-                        Make = a.Car.Make,
-                        Model = a.Car.Model,
-                        Year = a.Car.Year,
-                        Description = a.Car.Description
-                    } : null
+                    Make = a.Make,
+                    Model = a.Model,
+                    Year = a.Year,
+                    Description = a.Description
                 }).ToList();
 
                 _logger.LogInformation($"Mapped {auctionDtos.Count} auction DTOs");
@@ -147,10 +140,13 @@ namespace CarBid.WebAPI.Controllers
             {
                 var testAuction = new CreateAuctionDto
                 {
-                    CarId = 1, // Make sure this car exists
+                    Make = "Tesla",
+                    Model = "Model S",
+                    Year = 2023,
+                    Description = "Luxury electric vehicle in excellent condition",
+                    StartingPrice = 25000,
                     StartTime = DateTime.UtcNow.AddMinutes(-5), // Started 5 minutes ago
-                    EndTime = DateTime.UtcNow.AddHours(1), // Ends in 1 hour
-                    StartingPrice = 25000
+                    EndTime = DateTime.UtcNow.AddHours(1) // Ends in 1 hour
                 };
 
                 var auction = await _auctionService.CreateAuctionAsync(testAuction);
@@ -176,12 +172,14 @@ namespace CarBid.WebAPI.Controllers
                     Auctions = activeAuctions.Select(a => new
                     {
                         a.Id,
-                        a.CarId,
+                        a.Make,
+                        a.Model,
+                        a.Year,
+                        a.Description,
                         a.StartTime,
                         a.EndTime,
                         a.CurrentPrice,
-                        a.IsActive,
-                        Car = a.Car != null ? new { a.Car.Make, a.Car.Model, a.Car.Year } : null
+                        a.IsActive
                     })
                 };
                 return Ok(response);
@@ -214,14 +212,10 @@ namespace CarBid.WebAPI.Controllers
                         StartTime = auction.StartTime,
                         EndTime = auction.EndTime,
                         IsActive = auction.IsActive,
-                        Car = auction.Car != null ? new CarDto
-                        {
-                            Id = auction.Car.Id,
-                            Make = auction.Car.Make,
-                            Model = auction.Car.Model,
-                            Year = auction.Car.Year,
-                            Description = auction.Car.Description
-                        } : null,
+                        Make = auction.Make,
+                        Model = auction.Model,
+                        Year = auction.Year,
+                        Description = auction.Description,
                         TotalBids = bids.Count(),
                         WinningBid = winningBid != null ? new BidDto
                         {
@@ -305,26 +299,16 @@ namespace CarBid.WebAPI.Controllers
         {
             try
             {
-                // Create a test car
-                var carDto = new CreateCarDto
+                // Create a test auction
+                var auctionDto = new CreateAuctionDto
                 {
                     Make = "Tesla",
                     Model = "Model S",
                     Year = 2023,
                     Description = "Luxury electric vehicle in excellent condition",
-                    StartingPrice = 50000
-                };
-
-                var car = await _carService.AddCarAsync(carDto);
-                _logger.LogInformation($"Created test car with ID: {car.Id}");
-
-                // Create a test auction
-                var auctionDto = new CreateAuctionDto
-                {
-                    CarId = car.Id,
+                    StartingPrice = 50000,
                     StartTime = DateTime.UtcNow,
-                    EndTime = DateTime.UtcNow.AddHours(24),
-                    StartingPrice = carDto.StartingPrice
+                    EndTime = DateTime.UtcNow.AddHours(24)
                 };
 
                 var auction = await _auctionService.CreateAuctionAsync(auctionDto);
@@ -332,7 +316,6 @@ namespace CarBid.WebAPI.Controllers
 
                 return Ok(new { 
                     message = "Test data created successfully",
-                    carId = car.Id,
                     auctionId = auction.Id
                 });
             }

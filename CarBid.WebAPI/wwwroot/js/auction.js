@@ -64,7 +64,6 @@ const AuctionApp = (() => {
             
             startTimeUpdates();
             setInterval(loadDashboardStats, 30000);
-            showDebugInfo();
         } catch (error) {
             console.error('Initialization error:', error);
             showToast('Error', 'Failed to initialize application', 'error');
@@ -1110,20 +1109,97 @@ function getAuthHeaders() {
     };
 }
 
-function showDebugInfo() {
-    const debugInfo = document.getElementById('debug-info');
-    const debugContent = document.getElementById('debug-content');
-    if (debugInfo && debugContent) {
-        debugInfo.style.display = 'block';
-        debugContent.innerHTML = `
-            <pre>
-Current Auctions: ${JSON.stringify(currentAuctions, null, 2)}
-DOM Elements Present:
-- auctionsContainer: ${!!DOM.auctionsContainer}
-- searchInput: ${!!DOM.searchInput}
-- sortSelect: ${!!DOM.sortSelect}
-- loadingOverlay: ${!!DOM.loadingOverlay}
-            </pre>
-        `;
-    }
+function displayAuction(auction) {
+    return `
+        <div class="auction-card" data-auction-id="${auction.id}">
+            <div class="auction-header">
+                <h3>${auction.make} ${auction.model} ${auction.year}</h3>
+                <span class="badge ${auction.isActive ? 'bg-success' : 'bg-danger'}">
+                    ${auction.isActive ? 'Active' : 'Ended'}
+                </span>
+            </div>
+            <div class="auction-body">
+                <p class="description">${auction.description}</p>
+                <div class="price-info">
+                    <p>Current Price: <span class="current-price">$${auction.currentPrice}</span></p>
+                    <p>Starting Price: $${auction.startingPrice}</p>
+                </div>
+                <div class="time-info">
+                    <p>Start Time: ${new Date(auction.startTime).toLocaleString()}</p>
+                    <p>End Time: ${new Date(auction.endTime).toLocaleString()}</p>
+                </div>
+                <div class="bid-info">
+                    <p>Total Bids: ${auction.totalBids}</p>
+                </div>
+            </div>
+            ${auction.isActive ? createBidForm(auction) : ''}
+        </div>
+    `;
 }
+
+function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast show bg-${type}`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="toast-header">
+            <strong class="me-auto">CarBid</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body text-white">
+            ${message}
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 5000);
+}
+
+connection.on("BidPlaced", function (bid) {
+    const auctionCard = document.querySelector(`[data-auction-id="${bid.auctionId}"]`);
+    if (auctionCard) {
+        const priceElement = auctionCard.querySelector('.current-price');
+        const oldPrice = parseFloat(priceElement.textContent.replace('$', ''));
+        const newPrice = bid.amount;
+        
+        priceElement.textContent = `$${newPrice}`;
+        
+        // Show different toast messages based on the context
+        if (bid.bidderId === currentUserId) {
+            showToast('Your bid was placed successfully!', 'success');
+        } else {
+            showToast(`New bid placed: $${newPrice}`, 'info');
+        }
+        
+        // Animate price change
+        priceElement.classList.add('price-changed');
+        setTimeout(() => {
+            priceElement.classList.remove('price-changed');
+        }, 1000);
+    }
+});
+
+connection.on("AuctionEnded", function (auctionId) {
+    const auctionCard = document.querySelector(`[data-auction-id="${auctionId}"]`);
+    if (auctionCard) {
+        const statusBadge = auctionCard.querySelector('.badge');
+        statusBadge.classList.remove('bg-success');
+        statusBadge.classList.add('bg-danger');
+        statusBadge.textContent = 'Ended';
+        
+        // Remove bid form if exists
+        const bidForm = auctionCard.querySelector('form');
+        if (bidForm) {
+            bidForm.remove();
+        }
+        
+        showToast('Auction has ended!', 'warning');
+    }
+});

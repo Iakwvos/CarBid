@@ -41,9 +41,9 @@ builder.Services.AddCors(options =>
 });
 
 // Configure services
-builder.Services.AddScoped<IAuctionService, AuctionService>();
-builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-builder.Services.AddScoped<ICarService, CarService>();
+builder.Services.AddScoped<IAuctionService, AuctionService>()
+    .AddScoped(typeof(IRepository<>), typeof(Repository<>))
+    .AddScoped<IAuthService, AuthService>();
 
 // Database configuration
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
@@ -88,9 +88,6 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddHostedService<AuctionEndingService>();
-
-// Add AuthService to DI
-builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
 

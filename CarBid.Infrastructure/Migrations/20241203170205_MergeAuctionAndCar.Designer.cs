@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CarBid.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241201144311_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20241203170205_MergeAuctionAndCar")]
+    partial class MergeAuctionAndCar
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -124,11 +124,12 @@ namespace CarBid.Infrastructure.Migrations
                     b.Property<string>("ApplicationUserId")
                         .HasColumnType("text");
 
-                    b.Property<int>("CarId")
-                        .HasColumnType("integer");
-
                     b.Property<decimal>("CurrentPrice")
                         .HasColumnType("numeric");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("timestamp with time zone");
@@ -136,17 +137,26 @@ namespace CarBid.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("Make")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("StartingPrice")
                         .HasColumnType("numeric");
 
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicationUserId");
-
-                    b.HasIndex("CarId");
 
                     b.ToTable("Auctions", "public");
                 });
@@ -182,37 +192,6 @@ namespace CarBid.Infrastructure.Migrations
                     b.HasIndex("AuctionId");
 
                     b.ToTable("Bids", "public");
-                });
-
-            modelBuilder.Entity("CarBid.Domain.Entities.Car", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Make")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Model")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("StartingPrice")
-                        .HasColumnType("numeric");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Cars", "public");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -352,14 +331,6 @@ namespace CarBid.Infrastructure.Migrations
                     b.HasOne("CarBid.Domain.Entities.ApplicationUser", null)
                         .WithMany("CreatedAuctions")
                         .HasForeignKey("ApplicationUserId");
-
-                    b.HasOne("CarBid.Domain.Entities.Car", "Car")
-                        .WithMany("Auctions")
-                        .HasForeignKey("CarId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Car");
                 });
 
             modelBuilder.Entity("CarBid.Domain.Entities.Bid", b =>
@@ -440,11 +411,6 @@ namespace CarBid.Infrastructure.Migrations
             modelBuilder.Entity("CarBid.Domain.Entities.Auction", b =>
                 {
                     b.Navigation("Bids");
-                });
-
-            modelBuilder.Entity("CarBid.Domain.Entities.Car", b =>
-                {
-                    b.Navigation("Auctions");
                 });
 #pragma warning restore 612, 618
         }

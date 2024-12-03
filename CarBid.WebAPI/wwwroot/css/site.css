@@ -940,3 +940,25 @@ body {
 .blur-overlay .btn {
     min-width: 200px;
 }
+
+.price-changed {
+    animation: highlight 1s ease-out;
+}
+
+@keyframes highlight {
+    0% {
+        background-color: #ffd700;
+        color: #000;
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+.toast-container {
+    z-index: 1050;
+}
+
+.toast {
+    min-width: 250px;
+}

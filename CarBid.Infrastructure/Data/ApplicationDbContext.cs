@@ -14,26 +14,9 @@ namespace CarBid.Infrastructure.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (!optionsBuilder.IsConfigured)
-            {
-                var connectionString = new NpgsqlConnectionStringBuilder
-                {
-                    Host = "database-1.cnwwiyo68evh.us-east-1.rds.amazonaws.com",
-                    Database = "carbid",
-                    Username = "postgres",
-                    Password = "Kubajunki1!",
-                    Port = 5432,
-                    SslMode = SslMode.Require,
-                    Pooling = true,
-                    MinPoolSize = 1,
-                    MaxPoolSize = 20
-                }.ToString();
-
-                optionsBuilder.UseNpgsql(connectionString);
-            }
+            // Remove entire method as connection string is provided through DI in Program.cs
         }
 
-        public DbSet<Car> Cars => Set<Car>();
         public DbSet<Auction> Auctions => Set<Auction>();
         public DbSet<Bid> Bids => Set<Bid>();
 

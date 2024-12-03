@@ -36,11 +36,14 @@ namespace CarBid.Application.Services
             {
                 var auction = new Auction
                 {
-                    CarId = auctionDto.CarId,
-                    StartTime = DateTime.SpecifyKind(auctionDto.StartTime, DateTimeKind.Utc),
-                    EndTime = DateTime.SpecifyKind(auctionDto.EndTime, DateTimeKind.Utc),
-                    CurrentPrice = auctionDto.StartingPrice,
+                    Make = auctionDto.Make,
+                    Model = auctionDto.Model,
+                    Year = auctionDto.Year,
+                    Description = auctionDto.Description,
                     StartingPrice = auctionDto.StartingPrice,
+                    StartTime = auctionDto.StartTime,
+                    EndTime = auctionDto.EndTime,
+                    CurrentPrice = auctionDto.StartingPrice,
                     IsActive = true
                 };
 
@@ -48,7 +51,7 @@ namespace CarBid.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error creating auction: {ex}");
+                _logger.LogError($"Error creating auction: {ex.Message}");
                 throw;
             }
         }
@@ -71,21 +74,12 @@ namespace CarBid.Application.Services
         {
             try
             {
-                _logger.LogInformation("Getting active auctions");
-                var auctions = await _auctionRepository.GetAllWithIncludesAsync(a => a.Car);
-                _logger.LogInformation($"Found {auctions.Count()} total auctions");
-                
-                var activeAuctions = auctions.Where(a => 
-                    a.IsActive && 
-                    a.EndTime > DateTime.UtcNow
-                ).ToList();
-                
-                _logger.LogInformation($"Filtered to {activeAuctions.Count} active auctions");
-                return activeAuctions;
+                var activeAuctions = await _auctionRepository.GetAllAsync();
+                return activeAuctions.Where(a => a.IsActive).ToList();
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error getting active auctions: {ex}");
+                _logger.LogError($"Error getting active auctions: {ex.Message}");
                 throw;
             }
         }
@@ -134,32 +128,12 @@ namespace CarBid.Application.Services
             }
         }
 
-        public async Task<decimal> GetCurrentHighestBidAsync(int auctionId)
-        {
-            var auction = await _auctionRepository.GetByIdAsync(auctionId);
-            if (auction == null)
-                throw new Exception("Auction not found");
-
-            return auction.CurrentPrice;
-        }
-
-        public async Task<bool> EndAuctionAsync(int auctionId)
-        {
-            var auction = await _auctionRepository.GetByIdAsync(auctionId);
-            if (auction == null)
-                throw new Exception("Auction not found");
-
-            auction.IsActive = false;
-            await _auctionRepository.UpdateAsync(auction);
-            return true;
-        }
-
         public async Task<IEnumerable<Auction>> GetPastAuctionsAsync()
         {
             try
             {
                 _logger.LogInformation("Getting past auctions");
-                var auctions = await _auctionRepository.GetAllWithIncludesAsync(a => a.Car);
+                var auctions = await _auctionRepository.GetAllAsync();
                 return auctions.Where(a => !a.IsActive && a.EndTime <= DateTime.UtcNow).ToList();
             }
             catch (Exception ex)
@@ -173,78 +147,65 @@ namespace CarBid.Application.Services
         {
             try
             {
-                var auctions = await _auctionRepository.GetAllWithIncludesAsync(a => a.Car);
-                var auction = auctions.FirstOrDefault(a => a.Id == id);
-                
+                var auction = await _auctionRepository.GetByIdAsync(id);
                 if (auction == null)
-                    throw new Exception($"Auction with ID {id} not found");
-
-                var allBids = await _bidRepository.GetAllAsync();
-                var auctionBids = allBids
-                    .Where(b => b.AuctionId == id)
-                    .OrderByDescending(b => b.BidTime)
-                    .ToList();
-
-                var winningBid = auctionBids
-                    .OrderByDescending(b => b.Amount)
-                    .FirstOrDefault();
-
-                var userDict = new Dictionary<string, string>();
-                
-                foreach(var bid in auctionBids)
                 {
-                    var userId = bid.ApplicationUserId ?? bid.BidderId;
-                    
-                    if (!userDict.ContainsKey(userId))
-                    {
-                        var user = await _userManager.FindByIdAsync(userId);
-                        userDict[userId] = user != null 
-                            ? $"{user.FirstName} {user.LastName}".Trim()
-                            : "Unknown User";
-                    }
+                    throw new KeyNotFoundException("Auction not found");
                 }
 
-                var bidDtos = auctionBids.Select(b => new BidDto
+                var winningBid = auction.Bids.OrderByDescending(b => b.Amount).FirstOrDefault();
+                var winningBidDto = winningBid != null ? new BidDto
                 {
-                    Id = b.Id,
-                    AuctionId = b.AuctionId,
-                    Amount = b.Amount,
-                    BidTime = b.BidTime,
-                    BidderId = userDict.GetValueOrDefault(b.ApplicationUserId ?? b.BidderId, "Unknown User")
-                }).ToList();
-
-                var winningBidDto = winningBid != null ? bidDtos.First(b => b.Id == winningBid.Id) : null;
+                    Id = winningBid.Id,
+                    AuctionId = winningBid.AuctionId,
+                    Amount = winningBid.Amount,
+                    BidTime = winningBid.BidTime,
+                    BidderId = winningBid.BidderId
+                } : null;
 
                 return new AuctionDetailDto
                 {
                     Auction = new AuctionDto
                     {
                         Id = auction.Id,
-                        CurrentPrice = auction.CurrentPrice,
+                        Make = auction.Make,
+                        Model = auction.Model,
+                        Year = auction.Year,
+                        Description = auction.Description,
                         StartingPrice = auction.StartingPrice,
+                        CurrentPrice = auction.CurrentPrice,
                         StartTime = auction.StartTime,
                         EndTime = auction.EndTime,
                         IsActive = auction.IsActive,
-                        TotalBids = auctionBids.Count(),
-                        Car = auction.Car != null ? new CarDto
-                        {
-                            Id = auction.Car.Id,
-                            Make = auction.Car.Make,
-                            Model = auction.Car.Model,
-                            Year = auction.Car.Year,
-                            Description = auction.Car.Description
-                        } : null,
+                        TotalBids = auction.Bids.Count,
                         WinningBid = winningBidDto
                     },
-                    BidHistory = bidDtos,
-                    WinningBid = winningBidDto
+                    BidHistory = auction.Bids.Select(b => new BidDto
+                    {
+                        Id = b.Id,
+                        AuctionId = b.AuctionId,
+                        Amount = b.Amount,
+                        BidTime = b.BidTime,
+                        BidderId = b.BidderId
+                    }).ToList()
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error getting auction details: {ex}");
+                _logger.LogError($"Error getting auction details: {ex.Message}");
                 throw;
             }
+        }
+
+        public async Task<bool> EndAuctionAsync(int auctionId)
+        {
+            var auction = await _auctionRepository.GetByIdAsync(auctionId);
+            if (auction == null)
+                throw new Exception("Auction not found");
+
+            auction.IsActive = false;
+            await _auctionRepository.UpdateAsync(auction);
+            return true;
         }
 
         public async Task<Bid?> GetWinningBidAsync(int auctionId)

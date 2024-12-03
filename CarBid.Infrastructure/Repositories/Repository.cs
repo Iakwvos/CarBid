@@ -104,7 +104,7 @@ namespace CarBid.Infrastructure.Repositories
 
         public async Task DeleteAsync(T entity)
         {
-            _context.Set<T>().Remove(entity);
+            _dbSet.Remove(entity);
             await _context.SaveChangesAsync();
         }
     }
