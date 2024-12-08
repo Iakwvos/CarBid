@@ -46,7 +46,7 @@ const AuctionApp = (() => {
                     <i class="fas fa-${type === 'success' ? 'check-circle' : 
                                     type === 'error' ? 'exclamation-circle' : 
                                     type === 'warning' ? 'exclamation-triangle' : 
-                                    'info-circle'} me-2"></i>
+                                    'info-circle'}"></i>
                     <strong class="me-auto">${title}</strong>
                     <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
                 </div>
@@ -58,16 +58,44 @@ const AuctionApp = (() => {
 
         toastContainer.insertAdjacentHTML('beforeend', toastHtml);
         const toastElement = toastContainer.lastElementChild;
+        
+        // Show toast
         const toast = new bootstrap.Toast(toastElement, {
             autohide: true,
-            delay: 3000
+            delay: 5000 // Increased to 5 seconds
         });
-
         toast.show();
 
-        toastElement.addEventListener('hidden.bs.toast', () => {
-            toastElement.remove();
+        // Handle close animation
+        toastElement.addEventListener('hide.bs.toast', () => {
+            toastElement.classList.add('hiding');
         });
+
+        // Remove toast after animation
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            setTimeout(() => {
+                toastElement.remove();
+            }, 300); // Match animation duration
+        });
+    }
+
+    // Initialize SignalR connection
+    async function initializeSignalR() {
+        try {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("/auctionHub")
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("BidPlaced", (bid) => {
+                updateAuctionAfterBid(bid.auctionId, bid);
+            });
+
+            await connection.start();
+            console.log("SignalR Connected");
+        } catch (err) {
+            console.error("SignalR Connection Error: ", err);
+        }
     }
 
     // Initialize the application
@@ -85,6 +113,7 @@ const AuctionApp = (() => {
             };
 
             // Initialize features
+            await initializeSignalR();
             attachEventListeners();
             await loadAuctions();
             startTimeUpdates();
@@ -106,50 +135,49 @@ const AuctionApp = (() => {
     // Load auctions
     async function loadAuctions() {
         try {
-            // Simulated data for now - replace with actual API call
-            currentAuctions = [
-                {
-                    id: 1,
-                    make: 'Smart',
-                    model: 'Brabus',
-                    year: 2000,
-                    description: 'Washing Machine',
-                    currentBid: 1000,
-                    startingPrice: 1000,
-                    numberOfBids: 0,
-                    endTime: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days from now
-                    imageUrl: ''
-                },
-                {
-                    id: 2,
-                    make: 'Honda',
-                    model: 'Civic',
-                    year: 2006,
-                    description: 'Reliable Car running on LPG',
-                    currentBid: 5000,
-                    startingPrice: 5000,
-                    numberOfBids: 0,
-                    endTime: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(), // 8 days from now
-                    imageUrl: ''
-                },
-                {
-                    id: 3,
-                    make: 'Opel',
-                    model: 'Corsa',
-                    year: 2017,
-                    description: "Dad's car",
-                    currentBid: 15000,
-                    startingPrice: 15000,
-                    numberOfBids: 0,
-                    endTime: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(), // 3 hours from now
-                    imageUrl: ''
+            // Show loading state
+            if (DOM.loadingOverlay) {
+                DOM.loadingOverlay.classList.remove('d-none');
+            }
+
+            // Fetch active auctions from API
+            const response = await fetch('/api/auctions/active');
+            if (!response.ok) {
+                throw new Error('Failed to load auctions');
+            }
+
+            const data = await response.json();
+            console.log('Loaded auctions:', data);
+
+            // Update current auctions with bid counts
+            currentAuctions = await Promise.all(data.map(async (auction) => {
+                try {
+                    // Fetch bid history for each auction
+                    const bidsResponse = await fetch(`/api/auctions/${auction.id}/bids`);
+                    if (bidsResponse.ok) {
+                        const bids = await bidsResponse.json();
+                        return {
+                            ...auction,
+                            numberOfBids: bids.length,
+                            currentPrice: auction.currentPrice || auction.startingPrice
+                        };
+                    }
+                } catch (error) {
+                    console.error(`Error fetching bids for auction ${auction.id}:`, error);
                 }
-            ];
+                return auction;
+            }));
             
+            // Refresh the display
             filterAndSortAuctions();
         } catch (error) {
             console.error('Error loading auctions:', error);
             showToast('Error', 'Failed to load auctions', 'error');
+        } finally {
+            // Hide loading state
+            if (DOM.loadingOverlay) {
+                DOM.loadingOverlay.classList.add('d-none');
+            }
         }
     }
 
@@ -218,18 +246,24 @@ const AuctionApp = (() => {
         // Add controls to container
         controlsContainer.appendChild(timeLeft);
         controlsContainer.appendChild(watchlistBtn);
-        
-        // Add controls to card
+
+        // Handle image and placeholder
         const imageContainer = card.querySelector('.auction-image');
         if (imageContainer) {
             imageContainer.appendChild(controlsContainer);
-        }
-
-        // Set image
-        const img = card.querySelector('img');
-        if (img) {
-            img.src = auction.imageUrl || '';
-            img.alt = `${auction.year} ${auction.make} ${auction.model}`;
+            
+            // Add image or placeholder
+            const img = card.querySelector('img');
+            if (img) {
+                if (auction.imageUrl && auction.imageUrl.trim()) {
+                    img.src = auction.imageUrl;
+                    img.alt = `${auction.year} ${auction.make} ${auction.model}`;
+                    imageContainer.classList.remove('no-image');
+                } else {
+                    img.remove(); // Remove img element if no image
+                    imageContainer.classList.add('no-image');
+                }
+            }
         }
 
         // Set title
@@ -245,16 +279,42 @@ const AuctionApp = (() => {
         }
 
         // Set current bid
-        const currentBid = card.querySelector('.current-price .value');
+        const currentBid = card.querySelector('.current-price');
         if (currentBid) {
-            const price = auction.currentBid || auction.startingPrice || 0;
-            currentBid.textContent = `$${price.toLocaleString()}`;
+            const priceValue = currentBid.querySelector('.value');
+            const priceLabel = currentBid.querySelector('small');
+            
+            if (auction.currentPrice > auction.startingPrice) {
+                if (priceValue) priceValue.textContent = `$${auction.currentPrice.toLocaleString()}`;
+                if (priceLabel) priceLabel.textContent = 'Current bid';
+            } else {
+                if (priceValue) priceValue.textContent = `$${auction.startingPrice.toLocaleString()}`;
+                if (priceLabel) priceLabel.textContent = 'Starting price';
+            }
         }
 
         // Set bid count
-        const bidCount = card.querySelector('.bid-count span');
+        const bidCount = card.querySelector('.bid-count');
         if (bidCount) {
-            bidCount.textContent = auction.numberOfBids || 0;
+            const bidSpan = bidCount.querySelector('span');
+            const bidsText = bidCount.lastChild;
+            const numberOfBids = auction.numberOfBids || 0;
+            
+            if (bidSpan) {
+                bidSpan.textContent = numberOfBids;
+            }
+            
+            // Update the text to be grammatically correct
+            if (bidsText) {
+                bidsText.textContent = ` bid${numberOfBids !== 1 ? 's' : ''}`;
+            }
+
+            // Add color indication for bid activity
+            if (numberOfBids > 0) {
+                bidCount.classList.add('has-bids');
+            } else {
+                bidCount.classList.remove('has-bids');
+            }
         }
 
         // Add watchlist button functionality
@@ -308,7 +368,7 @@ const AuctionApp = (() => {
 
         const now = new Date();
         const end = new Date(auction.endTime);
-        const timeLeft = end - now;
+        const timeLeft = end.getTime() - now.getTime();
 
         if (timeLeft <= 0) {
             timeLeftElement.textContent = 'Ended';
@@ -353,7 +413,16 @@ const AuctionApp = (() => {
                 const auctionId = card.dataset.auctionId;
                 const auction = currentAuctions.find(a => a.id === parseInt(auctionId));
                 if (auction) {
-                    updateTimeLeft(auction, card);
+                    // Check if auction has ended
+                    const now = new Date();
+                    const endTime = new Date(auction.endTime);
+                    if (endTime.getTime() <= now.getTime() && auction.isActive) {
+                        auction.isActive = false;
+                        // Refresh display to show ended state
+                        filterAndSortAuctions();
+                    } else {
+                        updateTimeLeft(auction, card);
+                    }
                 }
             });
         }, 1000);
@@ -368,6 +437,13 @@ const AuctionApp = (() => {
 
         let filtered = [...currentAuctions];
 
+        // Filter out ended auctions that are not active
+        filtered = filtered.filter(auction => {
+            const endTime = new Date(auction.endTime);
+            const now = new Date();
+            return auction.isActive || endTime.getTime() > now.getTime();
+        });
+
         // Apply watchlist filter
         if (watchlistOnly) {
             filtered = filtered.filter(auction => watchlist.includes(auction.id));
@@ -378,7 +454,7 @@ const AuctionApp = (() => {
         if (urgencyFilter !== 'all') {
             filtered = filtered.filter(auction => {
                 const endTime = new Date(auction.endTime);
-                const timeLeft = endTime - now;
+                const timeLeft = endTime.getTime() - now.getTime();
                 const hoursLeft = timeLeft / (1000 * 60 * 60);
                 
                 // Only include active auctions (not ended)
@@ -411,8 +487,8 @@ const AuctionApp = (() => {
         filtered.sort((a, b) => {
             const aEndTime = new Date(a.endTime);
             const bEndTime = new Date(b.endTime);
-            const aTimeLeft = aEndTime - now;
-            const bTimeLeft = bEndTime - now;
+            const aTimeLeft = aEndTime.getTime() - now.getTime();
+            const bTimeLeft = bEndTime.getTime() - now.getTime();
             
             // Check if auctions have ended
             const aEnded = aTimeLeft <= 0;
@@ -423,7 +499,7 @@ const AuctionApp = (() => {
                     // Put ended auctions at the end
                     if (aEnded && !bEnded) return 1;
                     if (!aEnded && bEnded) return -1;
-                    if (aEnded && bEnded) return bEndTime - aEndTime; // Most recently ended first
+                    if (aEnded && bEnded) return bEndTime.getTime() - aEndTime.getTime(); // Most recently ended first
                     return aTimeLeft - bTimeLeft; // Sort by time remaining
                 case 'mostBids':
                     return (b.numberOfBids || 0) - (a.numberOfBids || 0);
@@ -432,13 +508,23 @@ const AuctionApp = (() => {
                 case 'priceLowToHigh':
                     return (a.currentBid || a.startingPrice || 0) - (b.currentBid || b.startingPrice || 0);
                 case 'newest':
-                    return b.createdAt ? new Date(b.createdAt) - new Date(a.createdAt) : 0;
+                    return b.createdAt ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() : 0;
                 default:
                     return 0;
             }
         });
 
         displayAuctions(filtered);
+    }
+
+    // Update auction after new bid
+    function updateAuctionAfterBid(auctionId, bidData) {
+        const auction = currentAuctions.find(a => a.id === auctionId);
+        if (auction) {
+            auction.currentPrice = bidData.amount;
+            auction.numberOfBids = (auction.numberOfBids || 0) + 1;
+            filterAndSortAuctions();
+        }
     }
 
     // Return public methods
@@ -454,6 +540,132 @@ const AuctionApp = (() => {
             }
             localStorage.setItem('watchlist', JSON.stringify(watchlist));
             filterAndSortAuctions();
+        },
+        showBidModal: (auctionId) => {
+            const auction = currentAuctions.find(a => a.id === parseInt(auctionId));
+            if (!auction) {
+                showToast('Error', 'Auction not found', 'error');
+                return;
+            }
+
+            // Debug time information
+            const now = new Date();
+            const endTime = new Date(auction.endTime);
+            console.log('Time Debug:', {
+                now: now.toISOString(),
+                endTime: auction.endTime,
+                endTimeDate: endTime.toISOString(),
+                timeLeft: endTime.getTime() - now.getTime(),
+                hasEnded: endTime.getTime() <= now.getTime()
+            });
+
+            if (endTime.getTime() <= now.getTime()) {
+                showToast('Error', 'This auction has ended', 'error');
+                return;
+            }
+
+            // Get modal elements
+            const bidModal = document.getElementById('bidModal');
+            const modalTitle = bidModal.querySelector('#bidModalTitle');
+            const currentBidElement = bidModal.querySelector('#currentBid');
+            const bidAmountInput = bidModal.querySelector('#bidAmount');
+            const bidModalDescription = bidModal.querySelector('#bidModalDescription');
+            const placeBidBtn = bidModal.querySelector('#placeBidBtn');
+            const auctionIdInput = bidModal.querySelector('#auctionId');
+
+            // Set modal content
+            modalTitle.textContent = `Place Bid - ${auction.year} ${auction.make} ${auction.model}`;
+            const currentPrice = auction.currentBid || auction.startingPrice;
+            currentBidElement.textContent = `$${currentPrice.toLocaleString()}`;
+            bidAmountInput.value = '';
+            bidAmountInput.min = currentPrice + 100;
+            bidModalDescription.textContent = `Minimum bid increment: $100. Current bid: $${currentPrice.toLocaleString()}`;
+            auctionIdInput.value = auction.id;
+
+            // Handle quick bid buttons
+            const quickBidButtons = bidModal.querySelectorAll('.quick-bid-btn');
+            quickBidButtons.forEach(btn => {
+                const increment = parseInt(btn.dataset.increment);
+                const newBid = currentPrice + increment;
+                btn.textContent = `+$${increment.toLocaleString()} ($${newBid.toLocaleString()})`;
+                
+                // Add click handler
+                btn.onclick = () => {
+                    bidAmountInput.value = newBid;
+                };
+            });
+
+            // Handle place bid button
+            placeBidBtn.onclick = async () => {
+                const bidAmount = parseInt(bidAmountInput.value);
+                if (!bidAmount || bidAmount <= currentPrice) {
+                    showToast('Error', `Bid must be higher than current bid ($${currentPrice.toLocaleString()})`, 'error');
+                    return;
+                }
+
+                // Check end time again before submitting
+                const nowCheck = new Date();
+                const endTimeCheck = new Date(auction.endTime);
+                if (endTimeCheck.getTime() <= nowCheck.getTime()) {
+                    showToast('Error', 'This auction has ended', 'error');
+                    return;
+                }
+
+                try {
+                    // Show loading state
+                    placeBidBtn.disabled = true;
+                    placeBidBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Placing Bid...';
+
+                    // Get the current user ID (you'll need to implement this based on your auth system)
+                    const bidderId = "user123"; // Replace with actual user ID
+
+                    // Prepare the bid data
+                    const bidData = {
+                        auctionId: auction.id,
+                        amount: bidAmount,
+                        bidderId: bidderId
+                    };
+
+                    console.log('Placing bid with data:', bidData);
+
+                    // Make API call to place bid
+                    const response = await fetch('/api/auctions/bid', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(bidData)
+                    });
+
+                    const responseData = await response.json();
+                    console.log('Bid response:', responseData);
+
+                    if (!response.ok) {
+                        throw new Error(responseData.message || responseData.error || 'Failed to place bid');
+                    }
+                    
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(bidModal);
+                    modal.hide();
+                    
+                    // Show success message
+                    showToast('Success', `Bid of $${bidAmount.toLocaleString()} placed successfully!`, 'success');
+
+                    // Update will come through SignalR
+                } catch (error) {
+                    console.error('Error placing bid:', error);
+                    showToast('Error', error.message || 'Failed to place bid', 'error');
+                } finally {
+                    // Reset button state
+                    placeBidBtn.disabled = false;
+                    placeBidBtn.innerHTML = 'Place Bid';
+                }
+            };
+
+            // Show modal
+            const modal = new bootstrap.Modal(bidModal);
+            modal.show();
         }
     };
 })();

@@ -145,6 +145,8 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: 1px solid var(--gray-200);
+    display: flex;
+    flex-direction: column;
 }
 
 .auction-card:hover {
@@ -327,17 +329,16 @@ body {
 .auction-title {
     font-size: 1.125rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
     color: var(--gray-900);
+    margin-bottom: 0.5rem;
     line-height: 1.4;
 }
 
 .auction-description {
-    font-size: 0.875rem;
     color: var(--gray-600);
+    font-size: 0.875rem;
     margin-bottom: 1rem;
     line-height: 1.5;
-    flex-grow: 1;
 }
 
 .auction-meta {
@@ -350,36 +351,66 @@ body {
 }
 
 .bid-info {
-    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .current-price {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--gray-900);
-    margin: 0.25rem 0;
-}
-
-.bid-count {
-    font-size: 0.75rem;
-    color: var(--gray-600);
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 0.25rem;
 }
 
-.bid-count i {
-    color: var(--primary-color);
+.current-price small {
+    color: var(--gray-500);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.current-price .value {
+    color: var(--gray-900);
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.bid-count {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--gray-500);
     font-size: 0.875rem;
+    transition: color 0.2s ease;
+}
+
+.bid-count i {
+    font-size: 1rem;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.bid-count.has-bids {
+    color: var(--primary-color);
+}
+
+.bid-count.has-bids i {
+    opacity: 1;
+    color: var(--primary-color);
 }
 
 .bid-btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
+    padding: 0.5rem 1.25rem;
     font-weight: 500;
-    border-radius: 0.5rem;
-    white-space: nowrap;
-    margin-left: 1rem;
+    transition: all 0.2s ease;
+}
+
+.bid-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Auction Status */
@@ -689,60 +720,162 @@ footer ul li a:hover {
 
 /* Toast Notifications */
 .toast-container {
+    --toast-width: 400px;
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
     z-index: 1060;
+    max-width: var(--toast-width);
+    width: 100%;
 }
 
 .toast {
+    width: 100%;
     background: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1rem;
     opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.toast.showing {
-    opacity: 1;
+    transform: translateX(100%);
+    animation: slideIn 0.3s ease forwards;
 }
 
 .toast.hiding {
-    opacity: 0;
+    animation: slideOut 0.3s ease forwards;
 }
 
 .toast-header {
-    border-bottom: none;
-    padding: 0.75rem 1rem;
-    border-top-left-radius: 0.5rem;
-    border-top-right-radius: 0.5rem;
+    background: transparent;
+    border: none;
+    padding: 1rem 1rem 0.5rem 1rem;
+    position: relative;
 }
 
-.toast-header.success {
-    background-color: var(--success-color);
-    color: white;
+.toast-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    border-radius: 1rem 1rem 0 0;
 }
 
-.toast-header.error {
-    background-color: var(--danger-color);
-    color: white;
+.toast-header.success::before {
+    background: linear-gradient(to right, var(--success-color), #34D399);
 }
 
-.toast-header.warning {
-    background-color: var(--warning-color);
-    color: white;
+.toast-header.error::before {
+    background: linear-gradient(to right, var(--danger-color), #F87171);
 }
 
-.toast-header.info {
-    background-color: var(--primary-color);
-    color: white;
+.toast-header.info::before {
+    background: linear-gradient(to right, var(--primary-color), #60A5FA);
 }
 
-.toast-header .btn-close {
-    filter: brightness(0) invert(1);
-    opacity: 0.8;
+.toast-header.warning::before {
+    background: linear-gradient(to right, var(--warning-color), #FBBF24);
+}
+
+.toast-header i {
+    font-size: 1.25rem;
+    margin-right: 0.75rem;
+}
+
+.toast-header.success i {
+    color: var(--success-color);
+}
+
+.toast-header.error i {
+    color: var(--danger-color);
+}
+
+.toast-header.info i {
+    color: var(--primary-color);
+}
+
+.toast-header.warning i {
+    color: var(--warning-color);
 }
 
 .toast-body {
-    padding: 1rem;
-    color: var(--gray-700);
+    padding: 0.5rem 1rem 1rem 1rem;
+    color: var(--gray-600);
+}
+
+.toast .btn-close {
+    background: none;
+    padding: 0;
+    margin: 0;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.toast .btn-close:hover {
+    opacity: 1;
+}
+
+.toast .btn-close::before {
+    content: '\f00d';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 1rem;
+    color: var(--gray-500);
+}
+
+/* Image Placeholder */
+.auction-image {
+    position: relative;
+    padding-top: 66.67%; /* 3:2 aspect ratio */
+    background: var(--gray-100);
+    overflow: hidden;
+}
+
+.auction-image.no-image::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--gray-100), var(--gray-200));
+    z-index: 1;
+}
+
+.auction-image.no-image::after {
+    content: '\f1b9';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    color: var(--gray-400);
+    z-index: 2;
+    opacity: 0.7;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
 }
 
 /* Loading Overlay */
