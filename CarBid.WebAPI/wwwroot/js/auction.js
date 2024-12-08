@@ -22,6 +22,7 @@ const AuctionApp = (() => {
     let connection = null;
     let bidHistoryChart = null;
     let DOM = {};
+    let currentUser = null;
 
     // Utility Functions
     function debounce(func, wait) {
@@ -112,6 +113,9 @@ const AuctionApp = (() => {
                 loadingOverlay: document.getElementById('loadingOverlay')
             };
 
+            // Get current user info
+            await getCurrentUser();
+
             // Initialize features
             await initializeSignalR();
             attachEventListeners();
@@ -120,6 +124,31 @@ const AuctionApp = (() => {
         } catch (error) {
             console.error('Initialization error:', error);
             showToast('Error', 'Failed to initialize application', 'error');
+        }
+    }
+
+    // Get current user information
+    async function getCurrentUser() {
+        try {
+            // Get user info from localStorage
+            const userJson = localStorage.getItem('user');
+            if (!userJson) {
+                console.log('No user found in localStorage');
+                return null;
+            }
+
+            const user = JSON.parse(userJson);
+            currentUser = {
+                id: user.id,
+                email: user.email,
+                fullName: `${user.firstName} ${user.lastName}`.trim()
+            };
+            
+            console.log('Current user:', currentUser);
+            return currentUser;
+        } catch (error) {
+            console.error('Error getting current user:', error);
+            return null;
         }
     }
 
@@ -293,7 +322,7 @@ const AuctionApp = (() => {
             }
         }
 
-        // Set bid count
+        // Set bid count with click handler
         const bidCount = card.querySelector('.bid-count');
         if (bidCount) {
             const bidSpan = bidCount.querySelector('span');
@@ -312,6 +341,13 @@ const AuctionApp = (() => {
             // Add color indication for bid activity
             if (numberOfBids > 0) {
                 bidCount.classList.add('has-bids');
+                // Make clickable only if there are bids
+                bidCount.style.cursor = 'pointer';
+                bidCount.onclick = async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await showBidHistory(auction.id);
+                };
             } else {
                 bidCount.classList.remove('has-bids');
             }
@@ -527,6 +563,285 @@ const AuctionApp = (() => {
         }
     }
 
+    // Show bid history modal
+    async function showBidHistory(auctionId) {
+        try {
+            // Show loading state
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.classList.remove('d-none');
+            }
+
+            // Fetch bid history
+            const response = await fetch(`/api/auctions/${auctionId}/bids`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch bid history');
+            }
+
+            const bids = await response.json();
+            console.log('Bid history:', bids);
+
+            // Get modal elements
+            const modal = document.getElementById('bidHistoryModal');
+            const modalTitle = modal.querySelector('.modal-title');
+            const chartCanvas = modal.querySelector('#bidHistoryChart');
+            const bidHistoryList = modal.querySelector('#bidHistoryList');
+
+            // Set modal title
+            const auction = currentAuctions.find(a => a.id === auctionId);
+            if (auction) {
+                modalTitle.textContent = `Bid History - ${auction.year} ${auction.make} ${auction.model}`;
+            }
+
+            // Create bid history list
+            if (bidHistoryList) {
+                bidHistoryList.innerHTML = bids.length ? `
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Bidder</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${bids.map(bid => `
+                                    <tr>
+                                        <td>${new Date(bid.bidTime).toLocaleString()}</td>
+                                        <td>${bid.bidderId || 'Anonymous'}</td>
+                                        <td class="text-end">$${bid.amount.toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                ` : '<p class="text-center text-muted">No bids yet</p>';
+            }
+
+            // Create chart
+            if (chartCanvas) {
+                // Destroy existing chart if it exists
+                if (bidHistoryChart) {
+                    bidHistoryChart.destroy();
+                }
+
+                // Prepare chart data
+                const chartData = bids.map(bid => ({
+                    x: new Date(bid.bidTime),
+                    y: bid.amount
+                })).sort((a, b) => a.x - b.x);
+
+                // Create new chart
+                bidHistoryChart = new Chart(chartCanvas, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: 'Bid Amount',
+                            data: chartData,
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#3B82F6',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `$${context.parsed.y.toLocaleString()}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'minute',
+                                    displayFormats: {
+                                        minute: 'MMM d, h:mm a'
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Time'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Bid Amount ($)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Show modal
+            const modalInstance = new bootstrap.Modal(modal);
+            modalInstance.show();
+
+        } catch (error) {
+            console.error('Error showing bid history:', error);
+            showToast('Error', 'Failed to load bid history', 'error');
+        } finally {
+            // Hide loading state
+            if (loadingOverlay) {
+                loadingOverlay.classList.add('d-none');
+            }
+        }
+    }
+
+    // Show bid modal
+    function showBidModal(auctionId) {
+        const auction = currentAuctions.find(a => a.id === parseInt(auctionId));
+        if (!auction) {
+            showToast('Error', 'Auction not found', 'error');
+            return;
+        }
+
+        // Check if user is authenticated
+        if (!currentUser?.id) {
+            showToast('Error', 'Please sign in to place bids', 'error');
+            return;
+        }
+
+        const now = new Date();
+        const endTime = new Date(auction.endTime);
+        if (endTime.getTime() <= now.getTime()) {
+            showToast('Error', 'This auction has ended', 'error');
+            return;
+        }
+
+        // Get modal elements
+        const bidModal = document.getElementById('bidModal');
+        const modalTitle = bidModal.querySelector('#bidModalTitle');
+        const currentBidElement = bidModal.querySelector('#currentBid');
+        const bidAmountInput = bidModal.querySelector('#bidAmount');
+        const bidModalDescription = bidModal.querySelector('#bidModalDescription');
+        const placeBidBtn = bidModal.querySelector('#placeBidBtn');
+        const auctionIdInput = bidModal.querySelector('#auctionId');
+
+        // Set modal content
+        modalTitle.textContent = `Place Bid - ${auction.year} ${auction.make} ${auction.model}`;
+        const currentPrice = auction.currentBid || auction.startingPrice;
+        currentBidElement.textContent = `$${currentPrice.toLocaleString()}`;
+        bidAmountInput.value = '';
+        bidAmountInput.min = currentPrice + 100;
+        bidModalDescription.textContent = `Minimum bid increment: $100. Current bid: $${currentPrice.toLocaleString()}`;
+        auctionIdInput.value = auction.id;
+
+        // Handle quick bid buttons
+        const quickBidButtons = bidModal.querySelectorAll('.quick-bid-btn');
+        quickBidButtons.forEach(btn => {
+            const increment = parseInt(btn.dataset.increment);
+            const newBid = currentPrice + increment;
+            btn.textContent = `+$${increment.toLocaleString()} ($${newBid.toLocaleString()})`;
+            
+            // Add click handler
+            btn.onclick = () => {
+                bidAmountInput.value = newBid;
+            };
+        });
+
+        // Handle place bid button
+        placeBidBtn.onclick = async () => {
+            const bidAmount = parseInt(bidAmountInput.value);
+            if (!bidAmount || bidAmount <= currentPrice) {
+                showToast('Error', `Bid must be higher than current bid ($${currentPrice.toLocaleString()})`, 'error');
+                return;
+            }
+
+            // Check if user is still authenticated
+            if (!currentUser?.id) {
+                showToast('Error', 'Please sign in to place bids', 'error');
+                return;
+            }
+
+            // Check end time again before submitting
+            const nowCheck = new Date();
+            const endTimeCheck = new Date(auction.endTime);
+            if (endTimeCheck.getTime() <= nowCheck.getTime()) {
+                showToast('Error', 'This auction has ended', 'error');
+                return;
+            }
+
+            try {
+                // Show loading state
+                placeBidBtn.disabled = true;
+                placeBidBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Placing Bid...';
+
+                // Prepare the bid data
+                const bidData = {
+                    auctionId: auction.id,
+                    amount: bidAmount,
+                    bidderId: currentUser.fullName,
+                    applicationUserId: currentUser.id
+                };
+
+                console.log('Placing bid with data:', bidData);
+
+                // Make API call to place bid
+                const response = await fetch('/api/auctions/bid', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(bidData)
+                });
+
+                const responseData = await response.json();
+                console.log('Bid response:', responseData);
+
+                if (!response.ok) {
+                    throw new Error(responseData.message || responseData.error || 'Failed to place bid');
+                }
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(bidModal);
+                modal.hide();
+                
+                // Show success message
+                showToast('Success', `Bid of $${bidAmount.toLocaleString()} placed successfully!`, 'success');
+
+                // Update will come through SignalR
+            } catch (error) {
+                console.error('Error placing bid:', error);
+                showToast('Error', error.message || 'Failed to place bid', 'error');
+            } finally {
+                // Reset button state
+                placeBidBtn.disabled = false;
+                placeBidBtn.innerHTML = 'Place Bid';
+            }
+        };
+
+        // Show modal
+        const modal = new bootstrap.Modal(bidModal);
+        modal.show();
+    }
+
     // Return public methods
     return {
         initialize,
@@ -548,17 +863,14 @@ const AuctionApp = (() => {
                 return;
             }
 
-            // Debug time information
+            // Check if user is authenticated
+            if (!currentUser?.id) {
+                showToast('Error', 'Please sign in to place bids', 'error');
+                return;
+            }
+
             const now = new Date();
             const endTime = new Date(auction.endTime);
-            console.log('Time Debug:', {
-                now: now.toISOString(),
-                endTime: auction.endTime,
-                endTimeDate: endTime.toISOString(),
-                timeLeft: endTime.getTime() - now.getTime(),
-                hasEnded: endTime.getTime() <= now.getTime()
-            });
-
             if (endTime.getTime() <= now.getTime()) {
                 showToast('Error', 'This auction has ended', 'error');
                 return;
@@ -603,6 +915,12 @@ const AuctionApp = (() => {
                     return;
                 }
 
+                // Check if user is still authenticated
+                if (!currentUser?.id) {
+                    showToast('Error', 'Please sign in to place bids', 'error');
+                    return;
+                }
+
                 // Check end time again before submitting
                 const nowCheck = new Date();
                 const endTimeCheck = new Date(auction.endTime);
@@ -616,14 +934,12 @@ const AuctionApp = (() => {
                     placeBidBtn.disabled = true;
                     placeBidBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Placing Bid...';
 
-                    // Get the current user ID (you'll need to implement this based on your auth system)
-                    const bidderId = "user123"; // Replace with actual user ID
-
                     // Prepare the bid data
                     const bidData = {
                         auctionId: auction.id,
                         amount: bidAmount,
-                        bidderId: bidderId
+                        bidderId: currentUser.fullName,
+                        applicationUserId: currentUser.id
                     };
 
                     console.log('Placing bid with data:', bidData);

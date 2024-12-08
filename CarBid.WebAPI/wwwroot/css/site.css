@@ -1491,3 +1491,60 @@ footer ul li a:hover {
     white-space: nowrap;
     z-index: 2;
 }
+
+/* Bid History Modal */
+.bid-history-modal .modal-body {
+    padding: 1.5rem;
+}
+
+.bid-history-chart {
+    height: 300px;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.bid-history-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border-radius: 0.5rem;
+    border: 1px solid var(--gray-200);
+}
+
+.bid-history-list .table {
+    margin-bottom: 0;
+}
+
+.bid-history-list .table th {
+    background: var(--gray-50);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    border-bottom: 2px solid var(--gray-200);
+}
+
+.bid-history-list .table td {
+    vertical-align: middle;
+    padding: 0.75rem 1rem;
+}
+
+/* Clickable Bid Count */
+.bid-count.has-bids {
+    transition: all 0.2s ease;
+}
+
+.bid-count.has-bids:hover {
+    color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.bid-count.has-bids:active {
+    transform: translateY(0);
+}
+
+.bid-count.has-bids i {
+    transition: transform 0.2s ease;
+}
+
+.bid-count.has-bids:hover i {
+    transform: rotate(-15deg);
+}
