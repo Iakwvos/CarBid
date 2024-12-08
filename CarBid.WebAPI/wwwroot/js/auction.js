@@ -161,11 +161,19 @@ const AuctionApp = (() => {
                 watchlistFilter: document.getElementById('watchlistFilter'),
                 urgencyFilter: document.getElementById('urgencyFilter'),
                 refreshButton: document.getElementById('refreshButton'),
-                loadingOverlay: document.getElementById('loadingOverlay')
+                loadingOverlay: document.getElementById('loadingOverlay'),
+                createAuctionBtn: document.getElementById('createAuctionBtn')
             };
 
             // Get current user info
             await getCurrentUser();
+
+            // Show/hide create auction button based on authentication
+            if (currentUser?.id) {
+                DOM.createAuctionBtn?.classList.remove('d-none');
+            } else {
+                DOM.createAuctionBtn?.classList.add('d-none');
+            }
 
             // Initialize features
             await initializeSignalR();
@@ -210,6 +218,12 @@ const AuctionApp = (() => {
         DOM.watchlistFilter?.addEventListener('change', filterAndSortAuctions);
         DOM.urgencyFilter?.addEventListener('change', filterAndSortAuctions);
         DOM.refreshButton?.addEventListener('click', loadAuctions);
+
+        // Add create auction button listener
+        const createAuctionBtn = document.getElementById('createAuctionBtn');
+        createAuctionBtn?.addEventListener('click', () => {
+            showCreateAuctionModal();
+        });
     }
 
     // Load auctions
@@ -938,6 +952,143 @@ const AuctionApp = (() => {
         modal.show();
     }
 
+    // Show create auction modal
+    function showCreateAuctionModal() {
+        // Check if user is authenticated
+        if (!currentUser?.id) {
+            showToast('Error', 'Please sign in to create an auction', 'error');
+            return;
+        }
+
+        // Get modal elements
+        const modal = document.getElementById('createAuctionModal');
+
+        if (!modal) {
+            console.error('Create auction modal not found');
+            return;
+        }
+
+        // Get form elements
+        const form = document.querySelector('#createAuctionForm');
+        const submitBtn = modal.querySelector('button[type="submit"]');
+        const startTimeInput = document.querySelector('#startTime');
+        const endTimeInput = document.querySelector('#endTime');
+
+        if (!form || !submitBtn || !startTimeInput || !endTimeInput) {
+            console.error('Required form elements not found');
+            return;
+        }
+
+        // Reset form
+        form.reset();
+
+        // Set minimum dates
+        const now = new Date();
+        const minStartTime = new Date(now.getTime() + 15 * 60000); // 15 minutes from now
+        const minEndTime = new Date(now.getTime() + 60 * 60000); // 1 hour from now
+
+        // Format dates for datetime-local input
+        const formatDate = (date) => {
+            return date.toISOString().slice(0, 16);
+        };
+
+        // Add custom start time checkbox
+        let customStartTimeCheckbox = modal.querySelector('#customStartTime');
+        let customStartTimeContainer = startTimeInput.parentElement;
+        
+        if (!customStartTimeCheckbox) {
+            const checkboxDiv = document.createElement('div');
+            checkboxDiv.className = 'form-check mb-3';
+            checkboxDiv.innerHTML = `
+                <input class="form-check-input" type="checkbox" id="customStartTime">
+                <label class="form-check-label" for="customStartTime">
+                    Set custom start time
+                </label>
+            `;
+            customStartTimeContainer.parentElement.insertBefore(checkboxDiv, customStartTimeContainer);
+            customStartTimeCheckbox = checkboxDiv.querySelector('#customStartTime');
+        }
+
+        // Handle start time visibility
+        customStartTimeContainer.style.display = 'none';
+        customStartTimeContainer.style.marginTop = '1rem';
+        startTimeInput.required = false;
+
+        customStartTimeCheckbox.onchange = (e) => {
+            customStartTimeContainer.style.display = e.target.checked ? 'block' : 'none';
+            startTimeInput.required = e.target.checked;
+            if (!e.target.checked) {
+                startTimeInput.value = formatDate(minStartTime);
+            }
+        };
+
+        // Set initial values
+        startTimeInput.value = formatDate(minStartTime);
+        endTimeInput.value = formatDate(minEndTime);
+        startTimeInput.min = formatDate(minStartTime);
+        endTimeInput.min = formatDate(minEndTime);
+
+        // Handle form submission
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            let auctionData = null;
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+
+                auctionData = {
+                    make: document.getElementById('carMake').value,
+                    model: document.getElementById('carModel').value,
+                    year: parseInt(document.getElementById('carYear').value),
+                    description: document.getElementById('carDescription').value,
+                    startingPrice: parseFloat(document.getElementById('startingPrice').value),
+                    startTime: customStartTimeCheckbox.checked ? new Date(startTimeInput.value).toISOString() : minStartTime.toISOString(),
+                    endTime: new Date(endTimeInput.value).toISOString()
+                };
+
+                // Validate auction duration
+                const startTime = new Date(auctionData.startTime);
+                const endTime = new Date(auctionData.endTime);
+                const timeDiff = endTime.getTime() - startTime.getTime();
+                const minDuration = 45 * 60 * 1000; // 45 minutes in milliseconds
+                
+                if (timeDiff < minDuration) {
+                    throw new Error('Auction duration must be at least 45 minutes');
+                }
+
+                const response = await fetch('/api/auctions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(auctionData)
+                });
+
+                const responseData = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(responseData.title || responseData.message || responseData.error || 'Failed to create auction');
+                }
+
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                modalInstance.hide();
+                showToast('Success', 'Auction created successfully!', 'success');
+                await loadAuctions();
+
+            } catch (error) {
+                showToast('Error', error.message || 'Failed to create auction', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Create Auction';
+            }
+        };
+
+        const modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+    }
+
     // Return public methods
     return {
         initialize,
@@ -952,7 +1103,15 @@ const AuctionApp = (() => {
             localStorage.setItem('watchlist', JSON.stringify(watchlist));
             filterAndSortAuctions();
         },
-        showBidModal
+        showBidModal,
+        showWatchlist: () => {
+            const watchlistFilter = document.getElementById('watchlistFilter');
+            if (watchlistFilter) {
+                watchlistFilter.checked = true;
+                filterAndSortAuctions();
+            }
+        },
+        showCreateAuctionModal
     };
 })();
 
