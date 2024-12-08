@@ -119,7 +119,8 @@ namespace CarBid.WebAPI.Controllers
                     Make = a.Make,
                     Model = a.Model,
                     Year = a.Year,
-                    Description = a.Description
+                    Description = a.Description,
+                    ImageUrls = a.ImageUrl != null ? new List<string> { a.ImageUrl } : new List<string>()
                 }).ToList();
 
                 _logger.LogInformation($"Mapped {auctionDtos.Count} auction DTOs");
@@ -217,6 +218,7 @@ namespace CarBid.WebAPI.Controllers
                         Year = auction.Year,
                         Description = auction.Description,
                         TotalBids = bids.Count(),
+                        ImageUrls = auction.ImageUrl != null ? new List<string> { auction.ImageUrl } : new List<string>(),
                         WinningBid = winningBid != null ? new BidDto
                         {
                             Id = winningBid.Id,

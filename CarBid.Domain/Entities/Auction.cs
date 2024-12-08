@@ -19,6 +19,7 @@ namespace CarBid.Domain.Entities
         public DateTime EndTime { get; set; }
         public decimal CurrentPrice { get; set; }
         public bool IsActive { get; set; }
+        public string? ImageUrl { get; set; }
         
         [JsonIgnore]
         public virtual ICollection<Bid> Bids { get; set; }

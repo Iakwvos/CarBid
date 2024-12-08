@@ -358,15 +358,30 @@ const AuctionApp = (() => {
         if (imageContainer) {
             imageContainer.appendChild(controlsContainer);
             
-            // Add image or placeholder
-            const img = card.querySelector('img');
-            if (img) {
-                if (auction.imageUrl && auction.imageUrl.trim()) {
-                    img.src = auction.imageUrl;
-                    img.alt = `${auction.year} ${auction.make} ${auction.model}`;
+            // Add carousel images or placeholder
+            const carouselInner = card.querySelector('.carousel-inner');
+            if (carouselInner) {
+                if (auction.imageUrls && auction.imageUrls.length > 0) {
+                    auction.imageUrls.forEach((imageUrl, index) => {
+                        const carouselItem = document.createElement('div');
+                        carouselItem.className = `carousel-item ${index === 0 ? 'active' : ''}`;
+                        carouselItem.innerHTML = `
+                            <img src="${imageUrl}" class="d-block w-100" alt="${auction.year} ${auction.make} ${auction.model}">
+                        `;
+                        carouselInner.appendChild(carouselItem);
+                    });
                     imageContainer.classList.remove('no-image');
                 } else {
-                    img.remove(); // Remove img element if no image
+                    // Add placeholder for no images
+                    const placeholderItem = document.createElement('div');
+                    placeholderItem.className = 'carousel-item active no-image';
+                    placeholderItem.innerHTML = `
+                        <div class="placeholder-content">
+                            <i class="fas fa-car fa-3x mb-3"></i>
+                            <p>No image available</p>
+                        </div>
+                    `;
+                    carouselInner.appendChild(placeholderItem);
                     imageContainer.classList.add('no-image');
                 }
             }
@@ -973,14 +988,96 @@ const AuctionApp = (() => {
         const submitBtn = modal.querySelector('button[type="submit"]');
         const startTimeInput = document.querySelector('#startTime');
         const endTimeInput = document.querySelector('#endTime');
+        const imageUploadArea = document.getElementById('imageUpload');
+        const imageInput = document.getElementById('carImage');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
 
-        if (!form || !submitBtn || !startTimeInput || !endTimeInput) {
+        if (!form || !submitBtn || !startTimeInput || !endTimeInput || !imageUploadArea || !imageInput) {
             console.error('Required form elements not found');
             return;
         }
 
-        // Reset form
+        // Reset form and image preview
         form.reset();
+        imagePreviewContainer.innerHTML = '';
+
+        // Handle image upload area click
+        imageUploadArea.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        // Handle drag and drop
+        imageUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            imageUploadArea.classList.add('dragover');
+        });
+
+        imageUploadArea.addEventListener('dragleave', () => {
+            imageUploadArea.classList.remove('dragover');
+        });
+
+        imageUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            imageUploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                imageInput.files = e.dataTransfer.files;
+                handleImagePreview();
+            }
+        });
+
+        // Handle image selection
+        imageInput.addEventListener('change', handleImagePreview);
+
+        function handleImagePreview() {
+            imagePreviewContainer.innerHTML = '';
+            const files = imageInput.files;
+
+            if (files.length > 5) {
+                showToast('Error', 'Maximum 5 images allowed', 'error');
+                imageInput.value = '';
+                return;
+            }
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast('Error', 'Image size should not exceed 5MB', 'error');
+                    imageInput.value = '';
+                    imagePreviewContainer.innerHTML = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewDiv = document.createElement('div');
+                    previewDiv.className = 'col-4';
+                    previewDiv.innerHTML = `
+                        <div class="image-preview">
+                            <img src="${e.target.result}" alt="Preview" class="img-fluid rounded">
+                            <button type="button" class="btn-remove" data-index="${i}">×</button>
+                        </div>
+                    `;
+                    imagePreviewContainer.appendChild(previewDiv);
+
+                    // Add remove button handler
+                    previewDiv.querySelector('.btn-remove').addEventListener('click', function() {
+                        const index = this.getAttribute('data-index');
+                        const dt = new DataTransfer();
+                        const { files } = imageInput;
+                        
+                        for (let i = 0; i < files.length; i++) {
+                            if (i !== parseInt(index)) {
+                                dt.items.add(files[i]);
+                            }
+                        }
+                        
+                        imageInput.files = dt.files;
+                        handleImagePreview();
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        }
 
         // Set minimum dates
         const now = new Date();
@@ -1037,7 +1134,8 @@ const AuctionApp = (() => {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
 
-                auctionData = {
+                // First, validate all form data
+                const formData = {
                     make: document.getElementById('carMake').value,
                     model: document.getElementById('carModel').value,
                     year: parseInt(document.getElementById('carYear').value),
@@ -1047,9 +1145,14 @@ const AuctionApp = (() => {
                     endTime: new Date(endTimeInput.value).toISOString()
                 };
 
+                // Validate required fields
+                if (!formData.make || !formData.model || !formData.year || !formData.description || !formData.startingPrice) {
+                    throw new Error('Please fill in all required fields');
+                }
+
                 // Validate auction duration
-                const startTime = new Date(auctionData.startTime);
-                const endTime = new Date(auctionData.endTime);
+                const startTime = new Date(formData.startTime);
+                const endTime = new Date(formData.endTime);
                 const timeDiff = endTime.getTime() - startTime.getTime();
                 const minDuration = 45 * 60 * 1000; // 45 minutes in milliseconds
                 
@@ -1057,11 +1160,62 @@ const AuctionApp = (() => {
                     throw new Error('Auction duration must be at least 45 minutes');
                 }
 
+                // Handle image upload if present
+                const imageInput = document.getElementById('carImage');
+                let imageUrl = null;
+                
+                if (imageInput.files.length > 0) {
+                    const formData = new FormData();
+                    formData.append('image', imageInput.files[0]);
+                    
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        throw new Error('Please log in to upload images');
+                    }
+
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading image...';
+
+                    const imageResponse = await fetch('/api/images/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    let responseData;
+                    const responseText = await imageResponse.text();
+                    try {
+                        responseData = JSON.parse(responseText);
+                    } catch (e) {
+                        console.error('Failed to parse response:', responseText);
+                        throw new Error('Failed to upload image: Invalid response format');
+                    }
+                    
+                    if (!imageResponse.ok) {
+                        throw new Error(responseData.message || 'Failed to upload image');
+                    }
+                    
+                    imageUrl = responseData.url;
+                    console.log('Image uploaded successfully:', imageUrl);
+                }
+
+                // Create auction data with image URL if present
+                auctionData = {
+                    ...formData,
+                    imageUrl
+                };
+
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating auction...';
+
+                console.log('Creating auction with data:', auctionData);
+
                 const response = await fetch('/api/auctions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
                     },
                     body: JSON.stringify(auctionData)
                 });

@@ -44,7 +44,8 @@ namespace CarBid.Application.Services
                     StartTime = auctionDto.StartTime,
                     EndTime = auctionDto.EndTime,
                     CurrentPrice = auctionDto.StartingPrice,
-                    IsActive = true
+                    IsActive = true,
+                    ImageUrl = auctionDto.ImageUrl
                 };
 
                 return await _auctionRepository.AddAsync(auction);
@@ -178,6 +179,7 @@ namespace CarBid.Application.Services
                         EndTime = auction.EndTime,
                         IsActive = auction.IsActive,
                         TotalBids = auction.Bids.Count,
+                        ImageUrls = auction.ImageUrl != null ? new List<string> { auction.ImageUrl } : new List<string>(),
                         WinningBid = winningBidDto
                     },
                     BidHistory = auction.Bids.Select(b => new BidDto

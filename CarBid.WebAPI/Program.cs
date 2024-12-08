@@ -13,8 +13,20 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using CarBid.Domain.Entities;
 using CarBid.Application.DTOs.Auth;
+using Amazon.S3;
+using Amazon.Runtime;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure AWS
+var awsOptions = builder.Configuration.GetSection("AWS");
+var credentials = new BasicAWSCredentials(
+    awsOptions["AccessKey"],
+    awsOptions["SecretKey"]
+);
+
+builder.Services.AddSingleton<IAmazonS3>(new AmazonS3Client(credentials, Amazon.RegionEndpoint.USEast1));
+builder.Services.AddScoped<IImageService, S3ImageService>();
 
 // Add services to the container
 builder.Services.AddSignalR();

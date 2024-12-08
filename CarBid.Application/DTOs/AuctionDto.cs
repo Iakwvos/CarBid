@@ -16,5 +16,6 @@ namespace CarBid.Application.DTOs
         public bool IsActive { get; set; }
         public int TotalBids { get; set; }
         public BidDto? WinningBid { get; set; }
+        public List<string> ImageUrls { get; set; } = new List<string>();
     }
 } 
