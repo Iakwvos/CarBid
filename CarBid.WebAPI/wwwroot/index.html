@@ -3,91 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="CarBid - Live Car Auctions Platform">
-    <title>CarBid - Live Car Auctions</title>
+    <meta name="description" content="LuxeBid - Premium Car Auctions">
+    <title>LuxeBid - Premium Car Auctions</title>
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAABILAAASCwAAAAAAAAAAAAD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="css/site.css" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <body>
-    <!-- Top Banner -->
-    <div class="top-banner bg-primary text-white py-2">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-phone-alt me-2"></i>
-                    <span class="me-3">+1 (555) 123-4567</span>
-                    <i class="fas fa-envelope me-2"></i>
-                    <span>support@carbid.com</span>
-                </div>
-                <div class="social-links">
-                    <a href="#" class="text-white me-3"><i class="fab fa-facebook"></i></a>
-                    <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
-                    <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-car-side me-2"></i>CarBid
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navbarContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#"><i class="fas fa-home me-1"></i>Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fas fa-info-circle me-1"></i>About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fas fa-question-circle me-1"></i>How It Works</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fas fa-headset me-1"></i>Support</a>
-                    </li>
-                </ul>
-                
-                <div class="d-flex gap-2" id="authButtons">
-                    <button class="btn btn-outline-primary" onclick="AuthService.showLoginModal()">
-                        <i class="fas fa-sign-in-alt me-2"></i>Login
-                    </button>
-                    <button class="btn btn-primary" onclick="AuthService.showRegisterModal()">
-                        <i class="fas fa-user-plus me-2"></i>Register
+            <a class="navbar-brand" href="#">LuxeBid</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="#">Auctions</a>
+                <a class="nav-link" href="#">Sell Your Car</a>
+                <a class="nav-link" href="#">About</a>
+                <a class="nav-link" href="#">Contact</a>
+                <!-- Watchlist Button -->
+                <div id="watchlistButton" class="nav-item me-3 d-none">
+                    <button class="btn btn-light position-relative" onclick="AuctionApp.showWatchlist()">
+                        <i class="far fa-heart"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary" id="watchlistCount">
+                            0
+                        </span>
                     </button>
                 </div>
-                <div class="d-flex gap-2 d-none" id="userInfo">
+                <!-- Auth Buttons -->
+                <div id="authButtons">
+                    <button class="btn btn-outline-primary me-2" onclick="AuthService.showRegisterModal()">Sign up</button>
+                    <button class="btn btn-primary" onclick="AuthService.showLoginModal()">Sign in</button>
+                </div>
+                <div id="userInfo" class="d-none">
                     <div class="dropdown">
-                        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user me-2"></i>
-                            <span id="userFullName">User Name</span>
+                        <button class="btn btn-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                            <span id="userFullName"></span>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <a class="dropdown-item" href="#" onclick="AuthService.showProfile()">
-                                    <i class="fas fa-id-card me-2"></i>Profile
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#" onclick="AuthService.showMyBids()">
-                                    <i class="fas fa-gavel me-2"></i>My Bids
-                                </a>
-                            </li>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" id="profileLink">Profile</a></li>
+                            <li><a class="dropdown-item" href="#" id="myBidsLink">My Bids</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="#" id="logoutBtn">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
-                                </a>
-                            </li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
                         </ul>
                     </div>
                 </div>
@@ -96,377 +52,309 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero-section text-center py-5 bg-light">
-        <div class="container">
-            <h1 class="display-4 mb-4">Find Your Dream Car</h1>
-            <p class="lead mb-4">Participate in live auctions and bid on your favorite vehicles</p>
-            <div class="stats-container d-flex justify-content-center gap-4 mb-4">
-                <div class="stat-box">
-                    <h3 class="stat-number">1,234+</h3>
-                    <p class="stat-label">Active Auctions</p>
-                </div>
-                <div class="stat-box">
-                    <h3 class="stat-number">50,000+</h3>
-                    <p class="stat-label">Happy Customers</p>
-                </div>
-                <div class="stat-box">
-                    <h3 class="stat-number">98%</h3>
-                    <p class="stat-label">Satisfaction Rate</p>
+    <section class="hero">
+        <div class="container text-center">
+            <h1>Find Your Dream Ride – Bid Now!</h1>
+            <p>Discover premium cars at unbeatable prices</p>
+            <div class="search-container">
+                <div class="row g-2 justify-content-center">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" id="makeInput" placeholder="Make">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" id="modelInput" placeholder="Model">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="text" class="form-control" id="yearInput" placeholder="Year">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" id="searchButton">Search</button>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Main Content -->
-    <main class="container mt-4">
-        <!-- Quick Stats -->
-        <div class="quick-stats mb-4">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <div class="stat-card">
-                        <i class="fas fa-gavel stat-icon"></i>
-                        <h4>Active Auctions</h4>
-                        <p class="stat-value" id="activeAuctionsCount">
-                            <span class="loading-placeholder">Loading...</span>
-                        </p>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card">
-                        <i class="fas fa-chart-line stat-icon"></i>
-                        <h4>Total Bids Today</h4>
-                        <p class="stat-value" id="totalBidsToday">
-                            <span class="loading-placeholder">Loading...</span>
-                        </p>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card">
-                        <i class="fas fa-clock stat-icon"></i>
-                        <h4>Ending Soon</h4>
-                        <p class="stat-value" id="endingSoonCount">
-                            <span class="loading-placeholder">Loading...</span>
-                        </p>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card">
-                        <i class="fas fa-trophy stat-icon"></i>
-                        <h4>Highest Active Bid</h4>
-                        <p class="stat-value" id="highestActiveBid">
-                            <span class="loading-placeholder">Loading...</span>
-                        </p>
-                    </div>
-                </div>
+    <!-- Featured Auctions -->
+    <section class="featured-auctions">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Featured Auctions</h2>
+                <button id="createAuctionBtn" class="btn btn-primary d-none">
+                    <i class="fas fa-plus me-2"></i>Create Auction
+                </button>
             </div>
-        </div>
-
-        <!-- Tabs Section -->
-        <ul class="nav nav-tabs auction-tabs" id="auctionTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="active-tab" data-bs-toggle="tab" 
-                        data-bs-target="#active" type="button" role="tab">
-                    <i class="fas fa-gavel me-2"></i>Active Auctions
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="past-tab" data-bs-toggle="tab" 
-                        data-bs-target="#past" type="button" role="tab">
-                    <i class="fas fa-history me-2"></i>Past Auctions
-                </button>
-            </li>
-        </ul>
-
-        <!-- Tab Content -->
-        <div class="tab-content" id="auctionTabsContent">
-            <!-- Active Auctions Tab -->
-            <div class="tab-pane fade show active" id="active" role="tabpanel">
-                <!-- Filters -->
-                <div class="row g-3 mb-4">
-                    <div class="col-12 col-md-6">
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="searchInput" 
-                                   placeholder="Search cars..." aria-label="Search cars">
-                            <button class="btn btn-outline-secondary" type="button">
-                                <i class="fas fa-search"></i>
-                            </button>
+            
+            <div class="auctions-controls mb-4">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-3">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search auctions...">
                         </div>
                     </div>
-                    <div class="col-12 col-md-6">
-                        <select class="form-select" id="sortSelect" aria-label="Sort auctions">
+                    <div class="col-md-3">
+                        <select id="sortSelect" class="form-select">
                             <option value="endingSoon">Ending Soon</option>
-                            <option value="priceLow">Price: Low to High</option>
-                            <option value="priceHigh">Price: High to Low</option>
+                            <option value="mostBids">Most Bids</option>
+                            <option value="priceHighToLow">Price: High to Low</option>
+                            <option value="priceLowToHigh">Price: Low to High</option>
                             <option value="newest">Newest First</option>
                         </select>
                     </div>
-                </div>
-
-                <!-- Auctions Grid -->
-                <div class="blur-overlay-container">
-                    <div id="auctionsContainer" class="row g-4">
-                        <!-- Auctions will be loaded here -->
+                    <div class="col-md-2">
+                        <select id="urgencyFilter" class="form-select">
+                            <option value="all">All Auctions</option>
+                            <option value="ending1h">Ending in 1h</option>
+                            <option value="ending4h">Ending in 4h</option>
+                            <option value="ending24h">Ending in 24h</option>
+                        </select>
                     </div>
-                    
-                    <div id="auctionsBlurOverlay" class="blur-overlay d-none">
-                        <h3>Want to take part in your first auction?</h3>
-                        <p class="mb-4">Join our community of car enthusiasts and start bidding on exclusive vehicles.</p>
-                        <button class="btn btn-primary mb-3" onclick="AuthService.showLoginModal()">
-                            <i class="fas fa-sign-in-alt me-2"></i>Login
-                        </button>
-                        <button class="btn btn-outline-primary" onclick="AuthService.showRegisterModal()">
-                            <i class="fas fa-user-plus me-2"></i>Register
+                    <div class="col-md-2">
+                        <div class="watchlist-filter">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="watchlistFilter">
+                                <label class="form-check-label" for="watchlistFilter">
+                                    <i class="fas fa-heart me-2"></i>Watchlist Only
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <button id="refreshButton" class="btn btn-outline-primary">
+                            <i class="fas fa-sync-alt"></i>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Past Auctions Tab -->
-            <div class="tab-pane fade" id="past" role="tabpanel">
-                <div class="row g-3 mb-4">
-                    <div class="col-12 col-md-6">
-                        <input type="text" class="form-control" id="pastSearchInput" 
-                               placeholder="Search past auctions..." aria-label="Search past auctions">
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <select class="form-select" id="pastSortSelect" aria-label="Sort past auctions">
-                            <option value="endedRecent">Recently Ended</option>
-                            <option value="highestPrice">Highest Final Price</option>
-                            <option value="mostBids">Most Bids</option>
-                        </select>
+            <div class="position-relative">
+                <div id="auctionsContainer" class="row">
+                    <!-- Auctions will be loaded here dynamically -->
+                </div>
+                <div id="auctionsBlurOverlay" class="auctions-blur-overlay d-none"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="categories">
+        <div class="container">
+            <h2>Categories</h2>
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="category-card" data-category="classic">
+                        <span>Classic Cars</span>
+                        <i class="fas fa-chevron-right"></i>
                     </div>
                 </div>
-                <div id="pastAuctionsContainer" class="row g-4">
-                    <!-- Past auctions will be loaded here -->
+                <div class="col-md-3">
+                    <div class="category-card" data-category="luxury">
+                        <span>Luxury</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="category-card" data-category="suv">
+                        <span>SUVs</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="category-card" data-category="electric">
+                        <span>Electric</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
                 </div>
             </div>
         </div>
-    </main>
+    </section>
 
-    <!-- Features Section -->
-    <section class="features-section py-5 bg-light mt-5">
-        <div class="container">
-            <h2 class="text-center mb-5">Why Choose CarBid?</h2>
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <i class="fas fa-shield-alt feature-icon"></i>
-                        <h3>Secure Bidding</h3>
-                        <p>Our platform ensures safe and secure transactions for all users.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <i class="fas fa-clock feature-icon"></i>
-                        <h3>Real-Time Updates</h3>
-                        <p>Get instant notifications and live updates on your favorite auctions.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <i class="fas fa-certificate feature-icon"></i>
-                        <h3>Verified Sellers</h3>
-                        <p>All our sellers are verified to ensure quality and authenticity.</p>
-                    </div>
-                </div>
-            </div>
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container text-center">
+            <h2>Ready to Find Your Dream Car?</h2>
+            <p>Join thousands of satisfied buyers and sellers on LuxeBid</p>
+            <button class="btn btn-light btn-lg" onclick="AuthService.showRegisterModal()">Get Started</button>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="footer bg-dark text-light py-5 mt-5">
+    <footer>
         <div class="container">
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <h5 class="mb-3">About CarBid</h5>
-                    <p>CarBid is your trusted platform for online car auctions. We connect buyers and sellers in a secure and transparent environment.</p>
-                    <div class="social-links mt-3">
-                        <a href="#" class="me-3"><i class="fab fa-facebook"></i></a>
-                        <a href="#" class="me-3"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="me-3"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-linkedin"></i></a>
-                    </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <h5>LuxeBid</h5>
+                    <p>Find your dream ride at the ultimate car auction platform.</p>
                 </div>
-                <div class="col-md-2">
-                    <h5 class="mb-3">Quick Links</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="#">Home</a></li>
+                <div class="col-md-3">
+                    <h5>Quick Links</h5>
+                    <ul>
+                        <li><a href="#">Auctions</a></li>
+                        <li><a href="#">Sell Your Car</a></li>
                         <li><a href="#">About Us</a></li>
-                        <li><a href="#">How It Works</a></li>
                         <li><a href="#">Contact</a></li>
                     </ul>
                 </div>
                 <div class="col-md-3">
-                    <h5 class="mb-3">Support</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="#">FAQ</a></li>
+                    <h5>Legal</h5>
+                    <ul>
                         <li><a href="#">Terms of Service</a></li>
                         <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">FAQ</a></li>
                     </ul>
                 </div>
                 <div class="col-md-3">
-                    <h5 class="mb-3">Contact Us</h5>
-                    <ul class="list-unstyled contact-info">
-                        <li><i class="fas fa-map-marker-alt me-2"></i>123 Auction St, City, Country</li>
-                        <li><i class="fas fa-phone me-2"></i>+1 (555) 123-4567</li>
-                        <li><i class="fas fa-envelope me-2"></i>support@carbid.com</li>
-                    </ul>
+                    <h5>Follow Us</h5>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
                 </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 LuxeBid. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
-    <!-- Copyright -->
-    <div class="copyright py-3 bg-darker text-light">
-        <div class="container text-center">
-            <small>&copy; 2024 CarBid. All rights reserved.</small>
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Welcome Back</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="loginEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="loginPassword" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe">
+                            <label class="form-check-label" for="rememberMe">Remember me</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                    </form>
+                    <div class="text-center mt-3">
+                        <p class="mb-0">Don't have an account? 
+                            <a href="#" onclick="AuthService.showRegisterModal()">Register here</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Place Bid Modal -->
-    <div class="modal fade" id="bidModal" tabindex="-1" aria-labelledby="bidModalLabel" aria-hidden="true">
+    <!-- Register Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="bidModalLabel">
-                        <i class="fas fa-gavel me-2"></i>Place Bid
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="firstName" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="firstName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="lastName" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="lastName" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="registerEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="registerPassword" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="confirmPassword" required>
+                                <button class="btn btn-outline-secondary toggle-password" type="button">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="phoneNumber" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phoneNumber">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Create Account</button>
+                    </form>
+                    <div class="text-center mt-3">
+                        <p class="mb-0">Already have an account? 
+                            <a href="#" onclick="AuthService.showLoginModal()">Sign in</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bid Modal -->
+    <div class="modal fade" id="bidModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bidModalTitle">Place Bid</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="auctionId">
-                    <div class="bid-stats mb-4">
-                        <div class="row g-3">
-                            <div class="col-6">
-                                <div class="stat-card">
-                                    <div class="stat-icon">
-                                        <i class="fas fa-dollar-sign"></i>
-                                    </div>
-                                    <div class="stat-label">Current Bid</div>
-                                    <div class="stat-value" id="currentBid">$0</div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="stat-card">
-                                    <div class="stat-icon">
-                                        <i class="fas fa-clock"></i>
-                                    </div>
-                                    <div class="stat-label">Time Left</div>
-                                    <div class="stat-value" id="timeLeft">--:--:--</div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label">Current Bid</label>
+                        <div id="currentBid" class="form-control-plaintext"></div>
                     </div>
                     <div class="mb-3">
-                        <label for="bidAmount" class="form-label fw-bold">Your Bid Amount ($)</label>
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text">
-                                <i class="fas fa-dollar-sign"></i>
-                            </span>
-                            <input type="number" class="form-control" id="bidAmount" 
-                                   step="100" required aria-label="Bid amount">
+                        <label for="bidAmount" class="form-label">Your Bid</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="bidAmount" step="100">
                         </div>
-                        <small id="minBidHint" class="text-muted mt-2 d-block">
-                            <i class="fas fa-info-circle me-1"></i>Minimum bid: $0
-                        </small>
                     </div>
+                    <div class="quick-bids mb-3">
+                        <label class="form-label">Quick Bid</label>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary quick-bid-btn" data-increment="100">+$100</button>
+                            <button class="btn btn-outline-primary quick-bid-btn" data-increment="500">+$500</button>
+                            <button class="btn btn-outline-primary quick-bid-btn" data-increment="1000">+$1,000</button>
+                        </div>
+                    </div>
+                    <div id="bidModalDescription" class="text-muted small"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Cancel
-                    </button>
-                    <button type="button" class="btn btn-primary" id="placeBidBtn">
-                        <i class="fas fa-gavel me-2"></i>Place Bid
-                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="placeBidBtn">Place Bid</button>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Create Auction Modal -->
-    <div class="modal fade" id="createAuctionModal" tabindex="-1" aria-labelledby="createAuctionModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title" id="createAuctionModalLabel">
-                        <i class="fas fa-plus-circle me-2"></i>Create New Auction
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="createAuctionForm" class="needs-validation" novalidate>
-                        <!-- Car Details Section -->
-                        <div class="section-card mb-4">
-                            <h6 class="section-title">
-                                <i class="fas fa-car me-2"></i>Car Details
-                            </h6>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="carMake" class="form-label">Make</label>
-                                    <input type="text" class="form-control" id="carMake" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="carModel" class="form-label">Model</label>
-                                    <input type="text" class="form-control" id="carModel" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="carYear" class="form-label">Year</label>
-                                    <input type="number" class="form-control" id="carYear" 
-                                           min="1900" max="2024" required>
-                                </div>
-                                <div class="col-12">
-                                    <label for="carDescription" class="form-label">Description</label>
-                                    <textarea class="form-control" id="carDescription" 
-                                              rows="3" required></textarea>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Auction Details Section -->
-                        <div class="section-card">
-                            <h6 class="section-title">
-                                <i class="fas fa-gavel me-2"></i>Auction Details
-                            </h6>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="startingPrice" class="form-label">Starting Price ($)</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-dollar-sign"></i>
-                                        </span>
-                                        <input type="number" class="form-control" id="startingPrice" 
-                                               min="0" step="0.01" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="endDate" class="form-label">End Date & Time</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-calendar"></i>
-                                        </span>
-                                        <input type="datetime-local" class="form-control" 
-                                               id="endDate" required>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Cancel
-                    </button>
-                    <button type="button" class="btn btn-success" id="createAuctionBtn">
-                        <i class="fas fa-plus me-2"></i>Create Auction
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Container -->
-    <div class="toast-container position-fixed"></div>
 
     <!-- Loading Overlay -->
     <div class="loading-overlay d-none" id="loadingOverlay">
@@ -475,75 +363,123 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/auction.js"></script>
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3"></div>
 
-    <!-- Add this after your existing modals -->
-    <div class="modal fade" id="auctionDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+    <!-- Create Auction Modal -->
+    <div class="modal fade" id="createAuctionModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="auctionDetailTitle"></h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Auction</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- Auction Summary Section -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2 text-muted">Final Price</h6>
-                                    <p id="auctionDetailCurrentPrice" class="h2 mb-0 text-primary"></p>
+                    <form id="createAuctionForm" class="create-auction-form">
+                        <div class="image-upload mb-4" id="imageUpload">
+                            <input type="file" id="carImage" accept="image/*" class="d-none" multiple>
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p class="mb-0">Click or drag images to upload</p>
+                            <small class="text-muted">Maximum 5 images, each up to 5MB</small>
+                            <div id="imagePreviewContainer" class="mt-3 row g-2"></div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="carMake" placeholder="Make" required>
+                                    <label for="carMake">Make</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="carModel" placeholder="Model" required>
+                                    <label for="carModel">Model</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="carYear" placeholder="Year" required min="1900" max="2024">
+                                    <label for="carYear">Year</label>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2 text-muted">Vehicle Details</h6>
-                                    <p id="auctionDetailDescription" class="mb-0"></p>
+
+                        <div class="form-floating mb-3">
+                            <textarea class="form-control" id="carDescription" style="height: 100px" placeholder="Description" required></textarea>
+                            <label for="carDescription">Description</label>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="startingPrice" placeholder="Starting Price" required min="0" step="100">
+                                    <label for="startingPrice">Starting Price ($)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="reservePrice" placeholder="Reserve Price" min="0" step="100">
+                                    <label for="reservePrice">Reserve Price ($) (Optional)</label>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Winner Section -->
-                    <div class="card mb-4 bg-success text-white" id="winnerCard">
-                        <div class="card-body d-flex align-items-center">
-                            <i class="bi bi-trophy-fill me-3 h3 mb-0"></i>
-                            <div>
-                                <h6 class="card-subtitle mb-1">Auction Winner</h6>
-                                <p class="h5 mb-0" id="auctionWinner"></p>
+                        <div class="datetime-inputs">
+                            <div class="form-floating">
+                                <input type="datetime-local" class="form-control" id="startTime" required>
+                                <label for="startTime">Start Time</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="datetime-local" class="form-control" id="endTime" required>
+                                <label for="endTime">End Time</label>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Bid History Section -->
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0">
-                                <i class="bi bi-clock-history me-2"></i>
-                                Bid History
-                            </h6>
-                            <span class="badge bg-primary" id="totalBids"></span>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Time</th>
-                                        <th>Amount</th>
-                                        <th>Bidder</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="bidHistoryBody">
-                                </tbody>
-                            </table>
-                        </div>
+                        <div class="alert alert-danger mt-3 d-none" id="auctionFormError"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="createAuctionForm" class="btn btn-primary">Create Auction</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Watchlist Modal -->
+    <div class="modal fade" id="watchlistModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-heart me-2"></i>Your Watchlist
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="watchlistContainer" class="row g-3">
+                        <!-- Watchlist items will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bid History Modal -->
+    <div class="modal fade" id="bidHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Bid History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="bid-history-chart mb-4">
+                        <canvas id="bidHistoryChart"></canvas>
+                    </div>
+                    <div id="bidHistoryList" class="bid-history-list">
+                        <p class="text-center text-muted">Loading bid history...</p>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -553,108 +489,81 @@
         </div>
     </div>
 
-    <!-- Login Modal -->
-    <div class="modal fade" id="loginModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+    <!-- Auction Card Template -->
+    <template id="auctionCardTemplate">
+        <div class="auction-card">
+            <div class="auction-image">
+                <img src="" alt="" class="card-img">
+            </div>
+            <div class="auction-details">
+                <h3 class="auction-title"></h3>
+                <p class="auction-description text-muted"></p>
+                <div class="auction-meta">
+                    <div class="bid-info">
+                        <small class="text-muted">Current bid</small>
+                        <div class="current-price">
+                            <span class="value"></span>
+                        </div>
+                        <div class="bid-count">
+                            <i class="fas fa-gavel"></i>
+                            <span>0</span> bids
+                        </div>
+                    </div>
+                    <button class="btn btn-primary bid-btn" onclick="AuctionApp.showBidModal(this.closest('.auction-card').dataset.auctionId)">
+                        Place Bid
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/auction.js"></script>
+
+    <!-- Auction Detail Modal -->
+    <div class="modal fade" id="auctionDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-sign-in-alt me-2"></i>Login
-                    </h5>
+                    <h5 class="modal-title" id="auctionDetailTitle"></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="loginForm">
-                        <div class="mb-3">
-                            <label for="loginEmail" class="form-label">Email address</label>
-                            <input type="email" class="form-control" id="loginEmail" required>
+                    <div class="current-price mb-3">
+                        <h4>Current Price</h4>
+                        <p id="auctionDetailCurrentPrice" class="h2"></p>
+                    </div>
+                    <div class="description mb-3">
+                        <h4>Description</h4>
+                        <p id="auctionDetailDescription"></p>
+                    </div>
+                    <div class="bid-history">
+                        <h4>Bid History</h4>
+                        <div id="bidHistoryBody" class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Bidder</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
                         </div>
-                        <div class="mb-3">
-                            <label for="loginPassword" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="loginPassword" required>
-                        </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="rememberMe">
-                            <label class="form-check-label" for="rememberMe">Remember me</label>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Login</button>
-                    </form>
-                    <hr>
-                    <p class="text-center mb-0">
-                        Don't have an account? 
-                        <a href="#" id="switchToRegister">Register here</a>
-                    </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="placeBidButton">Place Bid</button>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Register Modal -->
-    <div class="modal fade" id="registerModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-user-plus me-2"></i>Register
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="registerForm" class="row g-3">
-                        <div class="col-md-6">
-                            <label for="firstName" class="form-label">First Name</label>
-                            <input type="text" class="form-control" id="firstName" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="lastName" class="form-label">Last Name</label>
-                            <input type="text" class="form-control" id="lastName" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="registerEmail" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="registerEmail" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="phoneNumber" class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control" id="phoneNumber">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="registerPassword" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="registerPassword" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="confirmPassword" class="form-label">Confirm Password</label>
-                            <input type="password" class="form-control" id="confirmPassword" required>
-                        </div>
-                        <div class="col-12">
-                            <label for="address" class="form-label">Address</label>
-                            <input type="text" class="form-control" id="address">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="city" class="form-label">City</label>
-                            <input type="text" class="form-control" id="city">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="country" class="form-label">Country</label>
-                            <input type="text" class="form-control" id="country">
-                        </div>
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary w-100">Register</button>
-                        </div>
-                    </form>
-                    <hr>
-                    <p class="text-center mb-0">
-                        Already have an account? 
-                        <a href="#" id="switchToLogin">Login here</a>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add this before the closing body tag, after other scripts -->
-    <script src="js/auth.js"></script>
-
-    <!-- Add this right after the <body> tag -->
-    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3"></div>
 </body>
 </html>

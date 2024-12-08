@@ -325,5 +325,32 @@ namespace CarBid.WebAPI.Controllers
                 return StatusCode(500, new { error = ex.Message });
             }
         }
+
+        [HttpGet("{id}/bids")]
+        public async Task<ActionResult<IEnumerable<BidDto>>> GetAuctionBids(int id)
+        {
+            try
+            {
+                var bids = await _auctionService.GetAuctionBidsAsync(id);
+                if (bids == null)
+                    return NotFound();
+
+                var bidDtos = bids.Select(b => new BidDto
+                {
+                    Id = b.Id,
+                    AuctionId = b.AuctionId,
+                    Amount = b.Amount,
+                    BidTime = b.BidTime,
+                    BidderId = b.BidderId
+                }).OrderByDescending(b => b.BidTime);
+
+                return Ok(bidDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting bids for auction {id}: {ex}");
+                return StatusCode(500, "Error retrieving auction bids");
+            }
+        }
     }
 } 
