@@ -720,25 +720,29 @@ footer ul li a:hover {
 
 /* Toast Notifications */
 .toast-container {
-    --toast-width: 400px;
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1060;
-    max-width: var(--toast-width);
-    width: 100%;
+    position: fixed !important;
+    bottom: 1.5rem !important;
+    right: 1.5rem !important;
+    z-index: 1050;
+    max-width: 400px;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column-reverse;
 }
 
 .toast {
-    width: 100%;
+    pointer-events: auto;
     background: white;
     border: none;
-    border-radius: 1rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-                0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     margin-bottom: 1rem;
     opacity: 0;
     transform: translateX(100%);
+    margin-top: 0.5rem;
+}
+
+.toast-animation {
     animation: slideIn 0.3s ease forwards;
 }
 
@@ -746,83 +750,113 @@ footer ul li a:hover {
     animation: slideOut 0.3s ease forwards;
 }
 
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
 .toast-header {
-    background: transparent;
-    border: none;
-    padding: 1rem 1rem 0.5rem 1rem;
-    position: relative;
+    background: white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem 0.75rem 0 0;
+    display: flex;
+    align-items: center;
 }
 
-.toast-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    border-radius: 1rem 1rem 0 0;
-}
-
-.toast-header.success::before {
-    background: linear-gradient(to right, var(--success-color), #34D399);
-}
-
-.toast-header.error::before {
-    background: linear-gradient(to right, var(--danger-color), #F87171);
-}
-
-.toast-header.info::before {
-    background: linear-gradient(to right, var(--primary-color), #60A5FA);
-}
-
-.toast-header.warning::before {
-    background: linear-gradient(to right, var(--warning-color), #FBBF24);
-}
-
-.toast-header i {
-    font-size: 1.25rem;
-    margin-right: 0.75rem;
-}
-
-.toast-header.success i {
+.toast-header.success {
     color: var(--success-color);
 }
 
-.toast-header.error i {
+.toast-header.error {
     color: var(--danger-color);
 }
 
-.toast-header.info i {
-    color: var(--primary-color);
-}
-
-.toast-header.warning i {
+.toast-header.warning {
     color: var(--warning-color);
 }
 
+.toast-header.info {
+    color: var(--primary-color);
+}
+
+.toast-header i {
+    font-size: 1.1rem;
+    margin-right: 0.5rem;
+}
+
 .toast-body {
-    padding: 0.5rem 1rem 1rem 1rem;
-    color: var(--gray-600);
+    padding: 1rem;
+    color: var(--gray-700);
+    line-height: 1.5;
+    font-size: 0.9375rem;
 }
 
-.toast .btn-close {
-    background: none;
-    padding: 0;
-    margin: 0;
-    opacity: 0.5;
-    transition: opacity 0.2s ease;
+/* Bid Update Toast Styles */
+.bid-update {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
-.toast .btn-close:hover {
-    opacity: 1;
+.bid-update .auction-info {
+    font-weight: 600;
+    color: var(--gray-800);
 }
 
-.toast .btn-close::before {
-    content: '\f00d';
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
+.bid-update .price-change {
+    display: flex;
+    align-items: center;
     font-size: 1rem;
+    margin: 0.25rem 0;
+}
+
+.bid-update .old-price {
     color: var(--gray-500);
+    text-decoration: line-through;
+}
+
+.bid-update .new-price {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.bid-update .change-stats {
+    font-size: 0.875rem;
+}
+
+.bid-update .increase {
+    color: var(--success-color);
+    font-weight: 500;
+}
+
+.bid-update .bidder-info {
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.toast-header i.fa-gavel {
+    color: var(--primary-color);
+    transform: rotate(-45deg);
+    transform-origin: bottom right;
 }
 
 /* Image Placeholder */
@@ -1547,4 +1581,54 @@ footer ul li a:hover {
 
 .bid-count.has-bids:hover i {
     transform: rotate(-15deg);
+}
+
+/* Bid Update Toast Styles */
+.bid-update {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.bid-update .auction-info {
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.bid-update .price-change {
+    display: flex;
+    align-items: center;
+    font-size: 1rem;
+    margin: 0.25rem 0;
+}
+
+.bid-update .old-price {
+    color: var(--gray-500);
+    text-decoration: line-through;
+}
+
+.bid-update .new-price {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.bid-update .change-stats {
+    font-size: 0.875rem;
+}
+
+.bid-update .increase {
+    color: var(--success-color);
+    font-weight: 500;
+}
+
+.bid-update .bidder-info {
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.toast-header i.fa-gavel {
+    color: var(--primary-color);
+    transform: rotate(-45deg);
+    transform-origin: bottom right;
 }

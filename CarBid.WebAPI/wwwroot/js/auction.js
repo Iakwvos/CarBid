@@ -37,17 +37,25 @@ const AuctionApp = (() => {
         };
     }
 
+    // Show toast notification
     function showToast(title, message, type = 'info') {
-        const toastContainer = document.querySelector('.toast-container');
-        if (!toastContainer) return;
+        // Create toast container if it doesn't exist
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '1050';
+            document.body.appendChild(toastContainer);
+        }
 
+        // Create toast element
         const toastHtml = `
             <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="toast-header ${type}">
                     <i class="fas fa-${type === 'success' ? 'check-circle' : 
                                     type === 'error' ? 'exclamation-circle' : 
                                     type === 'warning' ? 'exclamation-triangle' : 
-                                    'info-circle'}"></i>
+                                    'gavel'} me-2"></i>
                     <strong class="me-auto">${title}</strong>
                     <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
                 </div>
@@ -57,26 +65,27 @@ const AuctionApp = (() => {
             </div>
         `;
 
+        // Add toast to container
         toastContainer.insertAdjacentHTML('beforeend', toastHtml);
         const toastElement = toastContainer.lastElementChild;
-        
-        // Show toast
+
+        // Initialize Bootstrap toast
         const toast = new bootstrap.Toast(toastElement, {
             autohide: true,
-            delay: 5000 // Increased to 5 seconds
+            delay: 5000
         });
+
+        // Add animation classes
+        toastElement.classList.add('toast-animation');
+
+        // Show toast
         toast.show();
 
-        // Handle close animation
-        toastElement.addEventListener('hide.bs.toast', () => {
-            toastElement.classList.add('hiding');
-        });
-
-        // Remove toast after animation
+        // Remove toast after it's hidden
         toastElement.addEventListener('hidden.bs.toast', () => {
             setTimeout(() => {
                 toastElement.remove();
-            }, 300); // Match animation duration
+            }, 300);
         });
     }
 
@@ -89,11 +98,53 @@ const AuctionApp = (() => {
                 .build();
 
             connection.on("BidPlaced", (bid) => {
-                updateAuctionAfterBid(bid.auctionId, bid);
+                console.log('Received bid:', bid);
+                const auction = currentAuctions.find(a => a.id === bid.auctionId);
+                if (auction) {
+                    const oldPrice = auction.currentPrice;
+                    updateAuctionAfterBid(bid.auctionId, bid);
+                    
+                    // Show toast for price change
+                    const priceChange = bid.amount - oldPrice;
+                    const percentageChange = ((priceChange / oldPrice) * 100).toFixed(1);
+                    
+                    // Only show toast for other users' bids
+                    if (bid.applicationUserId !== currentUser?.id) {
+                        showToast(
+                            'New Bid Placed', 
+                            `<div class="bid-update">
+                                <div class="auction-info">${auction.year} ${auction.make} ${auction.model}</div>
+                                <div class="price-change">
+                                    <span class="old-price">$${oldPrice.toLocaleString()}</span>
+                                    <i class="fas fa-arrow-right mx-2"></i>
+                                    <span class="new-price">$${bid.amount.toLocaleString()}</span>
+                                </div>
+                                <div class="change-stats">
+                                    <span class="increase">+$${priceChange.toLocaleString()} (+${percentageChange}%)</span>
+                                </div>
+                                <div class="bidder-info">
+                                    <i class="fas fa-user me-1"></i> ${bid.bidderId}
+                                </div>
+                            </div>`,
+                            'info'
+                        );
+                    }
+                }
             });
 
             await connection.start();
             console.log("SignalR Connected");
+
+            // Join auction groups for all current auctions
+            currentAuctions.forEach(async (auction) => {
+                try {
+                    await connection.invoke("JoinAuction", auction.id);
+                    console.log(`Joined auction group: ${auction.id}`);
+                } catch (err) {
+                    console.error(`Error joining auction group ${auction.id}:`, err);
+                }
+            });
+
         } catch (err) {
             console.error("SignalR Connection Error: ", err);
         }
@@ -197,6 +248,18 @@ const AuctionApp = (() => {
                 return auction;
             }));
             
+            // Join auction groups for all loaded auctions
+            if (connection && connection.state === signalR.HubConnectionState.Connected) {
+                currentAuctions.forEach(async (auction) => {
+                    try {
+                        await connection.invoke("JoinAuction", auction.id);
+                        console.log(`Joined auction group: ${auction.id}`);
+                    } catch (err) {
+                        console.error(`Error joining auction group ${auction.id}:`, err);
+                    }
+                });
+            }
+
             // Refresh the display
             filterAndSortAuctions();
         } catch (error) {
@@ -559,6 +622,38 @@ const AuctionApp = (() => {
         if (auction) {
             auction.currentPrice = bidData.amount;
             auction.numberOfBids = (auction.numberOfBids || 0) + 1;
+
+            // Update UI elements
+            const card = document.querySelector(`[data-auction-id="${auctionId}"]`);
+            if (card) {
+                // Update current price
+                const priceValue = card.querySelector('.current-price .value');
+                const priceLabel = card.querySelector('.current-price small');
+                if (priceValue) priceValue.textContent = `$${bidData.amount.toLocaleString()}`;
+                if (priceLabel) priceLabel.textContent = 'Current bid';
+
+                // Update bid count
+                const bidCount = card.querySelector('.bid-count');
+                if (bidCount) {
+                    const bidSpan = bidCount.querySelector('span');
+                    const bidsText = bidCount.lastChild;
+                    if (bidSpan) bidSpan.textContent = auction.numberOfBids;
+                    if (bidsText) bidsText.textContent = ` bid${auction.numberOfBids !== 1 ? 's' : ''}`;
+                    
+                    // Add has-bids class and click handler if first bid
+                    if (auction.numberOfBids === 1) {
+                        bidCount.classList.add('has-bids');
+                        bidCount.style.cursor = 'pointer';
+                        bidCount.onclick = async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            await showBidHistory(auction.id);
+                        };
+                    }
+                }
+            }
+
+            // Update sort if needed
             filterAndSortAuctions();
         }
     }
@@ -745,10 +840,11 @@ const AuctionApp = (() => {
 
         // Set modal content
         modalTitle.textContent = `Place Bid - ${auction.year} ${auction.make} ${auction.model}`;
-        const currentPrice = auction.currentBid || auction.startingPrice;
+        const currentPrice = auction.currentPrice || auction.startingPrice;
+        const minimumBid = currentPrice + 100;
         currentBidElement.textContent = `$${currentPrice.toLocaleString()}`;
-        bidAmountInput.value = '';
-        bidAmountInput.min = currentPrice + 100;
+        bidAmountInput.value = minimumBid;
+        bidAmountInput.min = minimumBid;
         bidModalDescription.textContent = `Minimum bid increment: $100. Current bid: $${currentPrice.toLocaleString()}`;
         auctionIdInput.value = auction.id;
 
@@ -818,7 +914,7 @@ const AuctionApp = (() => {
                 if (!response.ok) {
                     throw new Error(responseData.message || responseData.error || 'Failed to place bid');
                 }
-                
+
                 // Close modal
                 const modal = bootstrap.Modal.getInstance(bidModal);
                 modal.hide();
@@ -856,133 +952,7 @@ const AuctionApp = (() => {
             localStorage.setItem('watchlist', JSON.stringify(watchlist));
             filterAndSortAuctions();
         },
-        showBidModal: (auctionId) => {
-            const auction = currentAuctions.find(a => a.id === parseInt(auctionId));
-            if (!auction) {
-                showToast('Error', 'Auction not found', 'error');
-                return;
-            }
-
-            // Check if user is authenticated
-            if (!currentUser?.id) {
-                showToast('Error', 'Please sign in to place bids', 'error');
-                return;
-            }
-
-            const now = new Date();
-            const endTime = new Date(auction.endTime);
-            if (endTime.getTime() <= now.getTime()) {
-                showToast('Error', 'This auction has ended', 'error');
-                return;
-            }
-
-            // Get modal elements
-            const bidModal = document.getElementById('bidModal');
-            const modalTitle = bidModal.querySelector('#bidModalTitle');
-            const currentBidElement = bidModal.querySelector('#currentBid');
-            const bidAmountInput = bidModal.querySelector('#bidAmount');
-            const bidModalDescription = bidModal.querySelector('#bidModalDescription');
-            const placeBidBtn = bidModal.querySelector('#placeBidBtn');
-            const auctionIdInput = bidModal.querySelector('#auctionId');
-
-            // Set modal content
-            modalTitle.textContent = `Place Bid - ${auction.year} ${auction.make} ${auction.model}`;
-            const currentPrice = auction.currentBid || auction.startingPrice;
-            currentBidElement.textContent = `$${currentPrice.toLocaleString()}`;
-            bidAmountInput.value = '';
-            bidAmountInput.min = currentPrice + 100;
-            bidModalDescription.textContent = `Minimum bid increment: $100. Current bid: $${currentPrice.toLocaleString()}`;
-            auctionIdInput.value = auction.id;
-
-            // Handle quick bid buttons
-            const quickBidButtons = bidModal.querySelectorAll('.quick-bid-btn');
-            quickBidButtons.forEach(btn => {
-                const increment = parseInt(btn.dataset.increment);
-                const newBid = currentPrice + increment;
-                btn.textContent = `+$${increment.toLocaleString()} ($${newBid.toLocaleString()})`;
-                
-                // Add click handler
-                btn.onclick = () => {
-                    bidAmountInput.value = newBid;
-                };
-            });
-
-            // Handle place bid button
-            placeBidBtn.onclick = async () => {
-                const bidAmount = parseInt(bidAmountInput.value);
-                if (!bidAmount || bidAmount <= currentPrice) {
-                    showToast('Error', `Bid must be higher than current bid ($${currentPrice.toLocaleString()})`, 'error');
-                    return;
-                }
-
-                // Check if user is still authenticated
-                if (!currentUser?.id) {
-                    showToast('Error', 'Please sign in to place bids', 'error');
-                    return;
-                }
-
-                // Check end time again before submitting
-                const nowCheck = new Date();
-                const endTimeCheck = new Date(auction.endTime);
-                if (endTimeCheck.getTime() <= nowCheck.getTime()) {
-                    showToast('Error', 'This auction has ended', 'error');
-                    return;
-                }
-
-                try {
-                    // Show loading state
-                    placeBidBtn.disabled = true;
-                    placeBidBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Placing Bid...';
-
-                    // Prepare the bid data
-                    const bidData = {
-                        auctionId: auction.id,
-                        amount: bidAmount,
-                        bidderId: currentUser.fullName,
-                        applicationUserId: currentUser.id
-                    };
-
-                    console.log('Placing bid with data:', bidData);
-
-                    // Make API call to place bid
-                    const response = await fetch('/api/auctions/bid', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify(bidData)
-                    });
-
-                    const responseData = await response.json();
-                    console.log('Bid response:', responseData);
-
-                    if (!response.ok) {
-                        throw new Error(responseData.message || responseData.error || 'Failed to place bid');
-                    }
-                    
-                    // Close modal
-                    const modal = bootstrap.Modal.getInstance(bidModal);
-                    modal.hide();
-                    
-                    // Show success message
-                    showToast('Success', `Bid of $${bidAmount.toLocaleString()} placed successfully!`, 'success');
-
-                    // Update will come through SignalR
-                } catch (error) {
-                    console.error('Error placing bid:', error);
-                    showToast('Error', error.message || 'Failed to place bid', 'error');
-                } finally {
-                    // Reset button state
-                    placeBidBtn.disabled = false;
-                    placeBidBtn.innerHTML = 'Place Bid';
-                }
-            };
-
-            // Show modal
-            const modal = new bootstrap.Modal(bidModal);
-            modal.show();
-        }
+        showBidModal
     };
 })();
 
