@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CarBid.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241208155908_AddImageUrlToAuction")]
-    partial class AddImageUrlToAuction
+    [Migration("20241208172415_AddAuctionImagesTable")]
+    partial class AddAuctionImagesTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
