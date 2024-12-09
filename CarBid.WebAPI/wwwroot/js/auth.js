@@ -1,44 +1,45 @@
 const AuthService = {
     currentUser: null,
     loginModal: null,
-    signupModal: null,
+    registerModal: null,
 
     init() {
         // Initialize modals
         const loginModalEl = document.getElementById('loginModal');
-        const signupModalEl = document.getElementById('signupModal');
+        const registerModalEl = document.getElementById('registerModal');
         
         if (loginModalEl) {
-            this.loginModal = new bootstrap.Modal(loginModalEl, {
-                keyboard: false,
-                backdrop: 'static'
-            });
+            this.loginModal = new bootstrap.Modal(loginModalEl);
 
             // Add login form submission handler
             const loginForm = document.getElementById('loginForm');
             loginForm?.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                const submitBtn = loginForm.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
                 try {
                     const email = document.getElementById('loginEmail').value;
                     const password = document.getElementById('loginPassword').value;
                     await this.login(email, password);
                     showToast('Success', 'Logged in successfully!', 'success');
+                    window.location.reload();
                 } catch (error) {
-                    showToast('Error', error.message || 'Login failed', 'error');
+                    showToast('Login Failed', error.message || 'Invalid email or password. Please try again.', 'error');
+                } finally {
+                    submitBtn.disabled = false;
                 }
             });
         }
         
-        if (signupModalEl) {
-            this.signupModal = new bootstrap.Modal(signupModalEl, {
-                keyboard: false,
-                backdrop: 'static'
-            });
+        if (registerModalEl) {
+            this.registerModal = new bootstrap.Modal(registerModalEl);
 
             // Add register form submission handler
             const registerForm = document.getElementById('registerForm');
             registerForm?.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                const submitBtn = registerForm.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
                 try {
                     const userData = {
                         firstName: document.getElementById('firstName').value,
@@ -50,13 +51,16 @@ const AuthService = {
                     
                     const confirmPassword = document.getElementById('confirmPassword').value;
                     if (userData.password !== confirmPassword) {
-                        throw new Error('Passwords do not match');
+                        throw new Error('Passwords do not match. Please try again.');
                     }
                     
                     await this.signup(userData);
-                    showToast('Success', 'Account created successfully!', 'success');
+                    showToast('Success', 'Account created successfully! You are now logged in.', 'success');
+                    window.location.reload();
                 } catch (error) {
-                    showToast('Error', error.message || 'Registration failed', 'error');
+                    showToast('Registration Failed', error.message || 'Registration failed. Please try again.', 'error');
+                } finally {
+                    submitBtn.disabled = false;
                 }
             });
         }
@@ -66,7 +70,12 @@ const AuthService = {
         logoutBtn?.addEventListener('click', (e) => {
             e.preventDefault();
             this.logout();
-            showToast('Success', 'Logged out successfully!', 'success');
+        });
+
+        // Add click handler for the blur overlay
+        const blurOverlay = document.getElementById('auctionsBlurOverlay');
+        blurOverlay?.addEventListener('click', () => {
+            this.showLoginModal();
         });
 
         // Check for stored token
@@ -120,12 +129,12 @@ const AuthService = {
                 body: JSON.stringify({ email, password })
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Login failed');
+                throw new Error(data.message || 'Invalid email or password. Please try again.');
             }
 
-            const data = await response.json();
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
             this.currentUser = data.user;
@@ -146,17 +155,17 @@ const AuthService = {
                 body: JSON.stringify(userData)
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Registration failed');
+                throw new Error(data.message || 'Registration failed. Please try again.');
             }
 
-            const data = await response.json();
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
             this.currentUser = data.user;
             this.updateUI(true);
-            this.signupModal?.hide();
+            this.registerModal?.hide();
             return true;
         } catch (error) {
             console.error('Signup error:', error);
@@ -169,63 +178,38 @@ const AuthService = {
         localStorage.removeItem('user');
         this.currentUser = null;
         this.updateUI(false);
+        showToast('Success', 'Logged out successfully!', 'success');
         window.location.reload();
     },
 
     showLoginModal() {
-        this.signupModal?.hide();
+        this.registerModal?.hide();
         this.loginModal?.show();
     },
 
-    showSignupModal() {
+    showRegisterModal() {
         this.loginModal?.hide();
-        this.signupModal?.show();
-    },
-
-    getCurrentUser() {
-        return this.currentUser;
+        this.registerModal?.show();
     },
 
     getToken() {
         return localStorage.getItem('token');
-    },
-
-    isAuthenticated() {
-        return !!this.currentUser && !!this.getToken();
     }
 };
-
-// Initialize auth service when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    AuthService.init();
-});
 
 // Toast notification function
 function showToast(title, message, type = 'info') {
     const toastContainer = document.querySelector('.toast-container');
-    if (!toastContainer) return;
-    
-    let icon;
-    switch(type) {
-        case 'success':
-            icon = 'check-circle';
-            break;
-        case 'error':
-            icon = 'exclamation-circle';
-            break;
-        case 'warning':
-            icon = 'exclamation-triangle';
-            break;
-        default:
-            icon = 'info-circle';
+    if (!toastContainer) {
+        console.error('Toast container not found');
+        return;
     }
     
     const toastHtml = `
         <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header ${type}">
-                <i class="fas fa-${icon} me-2"></i>
-                <strong class="me-auto">${title}</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            <div class="toast-header bg-${type}">
+                <strong class="me-auto text-white">${title}</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
             </div>
             <div class="toast-body">
                 ${message}
@@ -236,14 +220,24 @@ function showToast(title, message, type = 'info') {
     toastContainer.insertAdjacentHTML('beforeend', toastHtml);
     const toastElement = toastContainer.lastElementChild;
     
-    const toast = new bootstrap.Toast(toastElement, {
+    const bsToast = new bootstrap.Toast(toastElement, {
         autohide: true,
-        delay: 3000
+        delay: 5000
     });
     
-    toast.show();
+    bsToast.show();
     
     toastElement.addEventListener('hidden.bs.toast', () => {
         toastElement.remove();
     });
 }
+
+// Initialize auth service when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    if (!document.querySelector('.toast-container')) {
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    AuthService.init();
+});

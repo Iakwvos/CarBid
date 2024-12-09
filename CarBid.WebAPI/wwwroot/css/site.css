@@ -1815,3 +1815,52 @@ footer ul li a:hover {
 .image-preview .btn-remove:hover {
     background-color: #bb2d3b;
 }
+
+.toast-container {
+    z-index: 9999;
+}
+
+.toast {
+    min-width: 300px;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.toast .toast-header {
+    border-bottom: none;
+    padding: 0.75rem 1rem;
+}
+
+.toast .toast-body {
+    padding: 1rem;
+}
+
+.toast .bg-success {
+    background-color: #28a745 !important;
+}
+
+.toast .bg-error {
+    background-color: #dc3545 !important;
+}
+
+.toast .bg-warning {
+    background-color: #ffc107 !important;
+}
+
+.toast .bg-info {
+    background-color: #17a2b8 !important;
+}
+
+.toast .btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+.modal {
+    padding-right: 0 !important;
+}
+
+.modal-open {
+    overflow: auto !important;
+    padding-right: 0 !important;
+}
