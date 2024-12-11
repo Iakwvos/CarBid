@@ -3,53 +3,49 @@
 .gitignore
 .gitattributes
 
-# Docker
-Dockerfile
-docker-compose.yml
-.dockerignore
-
-# Visual Studio files
+# Visual Studio
 .vs/
 *.user
 *.userosscache
-*.sln.docstates
+*.suo
+*.userprefs
 
 # Build results
 [Dd]ebug/
+[Dd]ebugPublic/
 [Rr]elease/
+[Rr]eleases/
 x64/
 x86/
 build/
+bld/
 [Bb]in/
 [Oo]bj/
 
-# Visual Studio Code
-.vscode/
-
-# Rider
-.idea/
-
-# User-specific files
-*.rsuser
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-
-# Logs
-logs/
-*.log
-
-# Environment variables
+# Environment files
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+*.env
 
-# Node modules
+# Docker
+Dockerfile
+docker-compose.yml
+*.dockerfile
+
+# Node modules (if any)
 node_modules/
 
-# Documentation
-README.md
-LICENSE 
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# Test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# Railway
+railway.json
+railway.toml 
