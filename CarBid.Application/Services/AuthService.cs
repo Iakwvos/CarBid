@@ -139,7 +139,14 @@ namespace CarBid.Application.Services
 
         private string GenerateJwtToken(ApplicationUser user)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not found in configuration")));
+            var jwtKey = Environment.GetEnvironmentVariable("JWT__Key") ?? 
+                throw new InvalidOperationException("JWT Key not found in environment variables");
+            var jwtIssuer = Environment.GetEnvironmentVariable("JWT__Issuer") ?? 
+                "https://localhost:7193";
+            var jwtAudience = Environment.GetEnvironmentVariable("JWT__Audience") ?? 
+                "https://localhost:7193";
+
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
@@ -152,8 +159,8 @@ namespace CarBid.Application.Services
             };
 
             var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
+                issuer: jwtIssuer,
+                audience: jwtAudience,
                 claims: claims,
                 expires: DateTime.UtcNow.AddDays(7),
                 signingCredentials: credentials

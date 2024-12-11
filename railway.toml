@@ -1,9 +1,0 @@
-[build]
-builder = "nixpacks"
-buildCommand = "dotnet publish -c Release -o out"
-
-[deploy]
-startCommand = "dotnet out/CarBid.WebAPI.dll"
-healthcheckPath = "/health"
-healthcheckTimeout = 100
-restartPolicyType = "on-failure" 
