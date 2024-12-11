@@ -30,10 +30,6 @@ if (builder.Environment.IsDevelopment())
             DotEnv.Load(new DotEnvOptions(envFilePaths: new[] { envFilePath }));
             Console.WriteLine("Successfully loaded .env file for development");
         }
-        else
-        {
-            Console.WriteLine("Warning: .env file not found for development");
-        }
     }
     catch (Exception ex)
     {
@@ -95,7 +91,6 @@ string connectionString;
 
 if (builder.Environment.IsDevelopment())
 {
-    // Use the full connection string from environment variables in development
     connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
         ?? throw new InvalidOperationException("Development connection string not found");
 }
@@ -108,14 +103,34 @@ else
     var password = Environment.GetEnvironmentVariable("PGPASSWORD");
     var port = Environment.GetEnvironmentVariable("PGPORT");
 
+    if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(database) || 
+        string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password) || 
+        string.IsNullOrEmpty(port))
+    {
+        throw new InvalidOperationException("Missing required database environment variables. " +
+            $"PGHOST: {!string.IsNullOrEmpty(host)}, " +
+            $"PGDATABASE: {!string.IsNullOrEmpty(database)}, " +
+            $"PGUSER: {!string.IsNullOrEmpty(username)}, " +
+            $"PGPORT: {!string.IsNullOrEmpty(port)}");
+    }
+
     connectionString = $"Host={host};Database={database};Username={username};Password={password};Port={port};SSL Mode=Require;Trust Server Certificate=true";
 }
 
 Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
-Console.WriteLine("Database connection configured");
+Console.WriteLine($"Database Host: {Environment.GetEnvironmentVariable("PGHOST")}");
+Console.WriteLine($"Database Name: {Environment.GetEnvironmentVariable("PGDATABASE")}");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+{
+    options.UseNpgsql(connectionString, npgsqlOptions =>
+    {
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorCodesToAdd: null);
+    });
+});
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -145,6 +160,8 @@ else if (string.IsNullOrEmpty(jwtKey))
     throw new InvalidOperationException("JWT Key not found in production environment");
 }
 
+Console.WriteLine($"JWT Configuration - Issuer: {jwtIssuer}, Audience: {jwtAudience}");
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -162,17 +179,44 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtAudience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"Authentication failed: {context.Exception}");
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddHostedService<AuctionEndingService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+// Configure error handling
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CarBid API V1"));
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async context =>
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "application/json";
+            var error = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+            if (error != null)
+            {
+                Console.WriteLine($"Error: {error.Error}");
+                await context.Response.WriteAsJsonAsync(new { error = "An error occurred. Please try again later." });
+            }
+        });
+    });
 }
 
 app.UseCors("AllowAll");
@@ -183,10 +227,28 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<AuctionHub>("/auctionHub");
+
+// Add health check endpoint
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+
 app.MapGet("/", context =>
 {
     context.Response.Redirect("/index.html");
     return Task.CompletedTask;
 });
+
+// Ensure database is created and migrated
+try
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    context.Database.Migrate();
+    Console.WriteLine("Database migrated successfully");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Error migrating database: {ex}");
+    throw;
+}
 
 app.Run();
