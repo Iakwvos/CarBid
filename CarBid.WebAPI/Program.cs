@@ -15,17 +15,46 @@ using CarBid.Domain.Entities;
 using CarBid.Application.DTOs.Auth;
 using Amazon.S3;
 using Amazon.Runtime;
+using dotenv.net;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure AWS
-var awsOptions = builder.Configuration.GetSection("AWS");
-var credentials = new BasicAWSCredentials(
-    awsOptions["AccessKey"],
-    awsOptions["SecretKey"]
-);
+// Load .env file only in Development
+if (builder.Environment.IsDevelopment())
+{
+    try 
+    {
+        var envFilePath = Path.Combine(Directory.GetCurrentDirectory(), "..", ".env");
+        if (File.Exists(envFilePath))
+        {
+            DotEnv.Load(new DotEnvOptions(envFilePaths: new[] { envFilePath }));
+            Console.WriteLine("Successfully loaded .env file for development");
+        }
+        else
+        {
+            Console.WriteLine("Warning: .env file not found for development");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Warning: Error loading .env file: {ex.Message}");
+    }
+}
 
-builder.Services.AddSingleton<IAmazonS3>(new AmazonS3Client(credentials, Amazon.RegionEndpoint.USEast1));
+// Configure AWS
+var awsAccessKey = Environment.GetEnvironmentVariable("AWS__AccessKey");
+var awsSecretKey = Environment.GetEnvironmentVariable("AWS__SecretKey");
+
+if (!string.IsNullOrEmpty(awsAccessKey) && !string.IsNullOrEmpty(awsSecretKey))
+{
+    var credentials = new BasicAWSCredentials(awsAccessKey, awsSecretKey);
+    builder.Services.AddSingleton<IAmazonS3>(new AmazonS3Client(credentials, Amazon.RegionEndpoint.USEast1));
+}
+else
+{
+    Console.WriteLine("Warning: AWS credentials not found. S3 functionality will be limited.");
+}
+
 builder.Services.AddScoped<IImageService, S3ImageService>();
 
 // Add services to the container
@@ -42,14 +71,18 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "CarBid API", Version = "v1" });
 });
 
-// Add CORS
+// Add CORS with environment-specific origins
+var corsOrigins = builder.Environment.IsDevelopment() 
+    ? new[] { "http://localhost:5193", "https://localhost:7193" }
+    : new[] { "https://carbid-production.up.railway.app" };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
-        builder.AllowAnyMethod()
+        builder.WithOrigins(corsOrigins)
+               .AllowAnyMethod()
                .AllowAnyHeader()
-               .AllowCredentials()
-               .SetIsOriginAllowed(_ => true));
+               .AllowCredentials());
 });
 
 // Configure services
@@ -58,8 +91,28 @@ builder.Services.AddScoped<IAuctionService, AuctionService>()
     .AddScoped<IAuthService, AuthService>();
 
 // Database configuration
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+string connectionString;
+
+if (builder.Environment.IsDevelopment())
+{
+    // Use the full connection string from environment variables in development
+    connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+        ?? throw new InvalidOperationException("Development connection string not found");
+}
+else
+{
+    // In production (Railway), construct the connection string from individual environment variables
+    var host = Environment.GetEnvironmentVariable("PGHOST");
+    var database = Environment.GetEnvironmentVariable("PGDATABASE");
+    var username = Environment.GetEnvironmentVariable("PGUSER");
+    var password = Environment.GetEnvironmentVariable("PGPASSWORD");
+    var port = Environment.GetEnvironmentVariable("PGPORT");
+
+    connectionString = $"Host={host};Database={database};Username={username};Password={password};Port={port};SSL Mode=Require;Trust Server Certificate=true";
+}
+
+Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
+Console.WriteLine("Database connection configured");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
@@ -75,10 +128,22 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// Add JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not found in configuration");
-var jwtIssuer = builder.Configuration["Jwt:Issuer"];
-var jwtAudience = builder.Configuration["Jwt:Audience"];
+// JWT Configuration
+var jwtKey = Environment.GetEnvironmentVariable("JWT__Key");
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT__Issuer");
+var jwtAudience = Environment.GetEnvironmentVariable("JWT__Audience");
+
+// Set default values for development
+if (builder.Environment.IsDevelopment())
+{
+    jwtKey ??= "your-super-secret-key-with-at-least-32-characters";
+    jwtIssuer ??= "https://localhost:7193";
+    jwtAudience ??= "https://localhost:7193";
+}
+else if (string.IsNullOrEmpty(jwtKey))
+{
+    throw new InvalidOperationException("JWT Key not found in production environment");
+}
 
 builder.Services.AddAuthentication(options =>
 {
@@ -111,7 +176,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowAll");
-app.UseHttpsRedirection();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseAuthentication();
