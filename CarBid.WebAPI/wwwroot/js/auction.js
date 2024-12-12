@@ -358,9 +358,11 @@ const AuctionApp = (() => {
         if (imageContainer) {
             imageContainer.appendChild(controlsContainer);
             
-            // Add carousel images or placeholder
-            const carouselInner = card.querySelector('.carousel-inner');
-            if (carouselInner) {
+            // Clear existing carousel content
+            const carousel = card.querySelector('.carousel-inner');
+            if (carousel) {
+                carousel.innerHTML = '';
+                
                 if (auction.imageUrls && auction.imageUrls.length > 0) {
                     auction.imageUrls.forEach((imageUrl, index) => {
                         const carouselItem = document.createElement('div');
@@ -368,7 +370,7 @@ const AuctionApp = (() => {
                         carouselItem.innerHTML = `
                             <img src="${imageUrl}" class="d-block w-100" alt="${auction.year} ${auction.make} ${auction.model}">
                         `;
-                        carouselInner.appendChild(carouselItem);
+                        carousel.appendChild(carouselItem);
                     });
                     imageContainer.classList.remove('no-image');
                 } else {
@@ -381,7 +383,7 @@ const AuctionApp = (() => {
                             <p>No image available</p>
                         </div>
                     `;
-                    carouselInner.appendChild(placeholderItem);
+                    carousel.appendChild(placeholderItem);
                     imageContainer.classList.add('no-image');
                 }
             }

@@ -2,10 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="LuxeBid - Premium Car Auctions">
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>LuxeBid - Premium Car Auctions</title>
-    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAABILAAASCwAAAAAAAAAAAAD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A" />
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAABILAAASCwAAAAAAAAAAAAD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="css/site.css" rel="stylesheet">
@@ -14,38 +17,54 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="#">LuxeBid</a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="#">Auctions</a>
-                <a class="nav-link" href="#">Sell Your Car</a>
-                <a class="nav-link" href="#">About</a>
-                <a class="nav-link" href="#">Contact</a>
-                <!-- Watchlist Button -->
-                <div id="watchlistButton" class="nav-item me-3 d-none">
-                    <button class="btn btn-light position-relative" onclick="AuctionApp.showWatchlist()">
-                        <i class="far fa-heart"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary" id="watchlistCount">
-                            0
-                        </span>
-                    </button>
+            <!-- Mobile Menu Button -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- Logo -->
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-car-side me-2"></i>LuxeBid
+            </a>
+
+            <!-- Desktop Navigation -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-car me-2 d-lg-none"></i>Auctions</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-tag me-2 d-lg-none"></i>Sell Your Car</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-info-circle me-2 d-lg-none"></i>About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-envelope me-2 d-lg-none"></i>Contact</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- User Menu -->
+            <div class="d-flex align-items-center">
+                <div id="userInfo" class="d-none">
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle me-2"></i>
+                            <span id="userFullName"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" id="profileLink"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="#" id="myBidsLink"><i class="fas fa-gavel me-2"></i>My Bids</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
                 </div>
                 <!-- Auth Buttons -->
                 <div id="authButtons">
-                    <button class="btn btn-outline-primary me-2" onclick="AuthService.showRegisterModal()">Sign up</button>
+                    <button class="btn btn-outline-primary" onclick="AuthService.showRegisterModal()">Sign up</button>
                     <button class="btn btn-primary" onclick="AuthService.showLoginModal()">Sign in</button>
-                </div>
-                <div id="userInfo" class="d-none">
-                    <div class="dropdown">
-                        <button class="btn btn-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
-                            <span id="userFullName"></span>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" id="profileLink">Profile</a></li>
-                            <li><a class="dropdown-item" href="#" id="myBidsLink">My Bids</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
-                        </ul>
-                    </div>
                 </div>
             </div>
         </div>
@@ -53,47 +72,134 @@
 
     <!-- Hero Section -->
     <section class="hero">
-        <div class="container text-center">
-            <h1>Find Your Dream Ride – Bid Now!</h1>
-            <p>Discover premium cars at unbeatable prices</p>
-            <div class="search-container">
-                <div class="row g-2 justify-content-center">
-                    <div class="col-md-3">
-                        <input type="text" class="form-control" id="makeInput" placeholder="Make">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 text-center text-lg-start mb-5 mb-lg-0">
+                    <h1 class="display-4 fw-bold mb-4">Find Your Dream Car at Auction</h1>
+                    <p class="lead mb-4">Discover premium vehicles from trusted sellers. Bid, win, and drive home your perfect car.</p>
+                    <div class="d-flex gap-3 justify-content-center justify-content-lg-start">
+                        <button class="btn btn-primary btn-lg" onclick="AuthService.showRegisterModal()">Start Bidding</button>
+                        <button class="btn btn-outline-light btn-lg" onclick="document.querySelector('.active-auctions').scrollIntoView({behavior: 'smooth'})">View Auctions</button>
                     </div>
-                    <div class="col-md-3">
-                        <input type="text" class="form-control" id="modelInput" placeholder="Model">
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" class="form-control" id="yearInput" placeholder="Year">
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-primary w-100" id="searchButton">Search</button>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-stats">
+                        <div class="row g-4">
+                            <div class="col-6">
+                                <div class="hero-stat-card">
+                                    <div class="stat-value">10K+</div>
+                                    <div class="stat-label">Active Bidders</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="hero-stat-card">
+                                    <div class="stat-value">$50M+</div>
+                                    <div class="stat-label">Cars Sold</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="hero-stat-card">
+                                    <div class="stat-value">500+</div>
+                                    <div class="stat-label">Live Auctions</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="hero-stat-card">
+                                    <div class="stat-value">98%</div>
+                                    <div class="stat-label">Satisfaction Rate</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Featured Auctions -->
-    <section class="featured-auctions">
+    <!-- Features Section -->
+    <section class="features-section py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-3 col-sm-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3>Secure Bidding</h3>
+                        <p>Advanced encryption and fraud protection for safe transactions</p>
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check"></i> Verified sellers</li>
+                            <li><i class="fas fa-check"></i> Secure payments</li>
+                            <li><i class="fas fa-check"></i> Buyer protection</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3>Vehicle History</h3>
+                        <p>Comprehensive vehicle background checks and documentation</p>
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check"></i> Accident history</li>
+                            <li><i class="fas fa-check"></i> Service records</li>
+                            <li><i class="fas fa-check"></i> Ownership details</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <h3>Detailed Listings</h3>
+                        <p>High-quality photos and comprehensive vehicle information</p>
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check"></i> HD photography</li>
+                            <li><i class="fas fa-check"></i> 360° views</li>
+                            <li><i class="fas fa-check"></i> Condition reports</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <h3>Expert Support</h3>
+                        <p>Professional assistance throughout your bidding journey</p>
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check"></i> 24/7 support</li>
+                            <li><i class="fas fa-check"></i> Live chat</li>
+                            <li><i class="fas fa-check"></i> Bidding assistance</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Active Auctions -->
+    <section class="active-auctions">
         <div class="container">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Featured Auctions</h2>
+                <h2 class="h3">Active Auctions</h2>
                 <button id="createAuctionBtn" class="btn btn-primary d-none">
-                    <i class="fas fa-plus me-2"></i>Create Auction
+                    <i class="fas fa-plus me-2"></i>
+                    <span class="d-none d-md-inline">Create Auction</span>
                 </button>
             </div>
             
             <div class="auctions-controls mb-4">
-                <div class="row g-3 align-items-center">
-                    <div class="col-md-3">
-                        <div class="search-box">
-                            <i class="fas fa-search"></i>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
                             <input type="text" id="searchInput" class="form-control" placeholder="Search auctions...">
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-3">
                         <select id="sortSelect" class="form-select">
                             <option value="endingSoon">Ending Soon</option>
                             <option value="mostBids">Most Bids</option>
@@ -102,7 +208,7 @@
                             <option value="newest">Newest First</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-6 col-md-3">
                         <select id="urgencyFilter" class="form-select">
                             <option value="all">All Auctions</option>
                             <option value="ending1h">Ending in 1h</option>
@@ -110,7 +216,30 @@
                             <option value="ending24h">Ending in 24h</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-12 col-md-2">
+                        <div class="d-flex gap-2">
+                            <button id="refreshButton" class="btn btn-outline-primary flex-grow-1">
+                                <i class="fas fa-sync-alt"></i>
+                                <span class="d-none d-md-inline ms-2">Refresh</span>
+                            </button>
+                            <div class="dropdown d-md-none">
+                                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-filter"></i>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end p-3">
+                                    <div class="watchlist-filter">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="watchlistFilter">
+                                            <label class="form-check-label" for="watchlistFilter">
+                                                <i class="fas fa-heart me-2"></i>Watchlist Only
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 d-none d-md-block">
                         <div class="watchlist-filter">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="watchlistFilter">
@@ -120,19 +249,176 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-2 text-end">
-                        <button id="refreshButton" class="btn btn-outline-primary">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
+                </div>
+            </div>
+
+            <div id="auctionsContainer" class="row g-3">
+                <!-- Auctions will be loaded here dynamically -->
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <div class="container">
+            <h2 class="text-center mb-5">How LuxeBid Works</h2>
+            
+            <!-- For Buyers -->
+            <div class="mb-5">
+                <h3 class="h4 mb-4">For Buyers</h3>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="guide-card">
+                            <div class="guide-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="guide-content">
+                                <h4>1. Create an Account</h4>
+                                <p>Sign up for free and verify your email to start bidding on premium vehicles.</p>
+                                <a href="#" class="btn btn-sm btn-outline-primary">Register Now</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="guide-card">
+                            <div class="guide-icon">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="guide-content">
+                                <h4>2. Find Your Dream Car</h4>
+                                <p>Browse through our curated selection of premium vehicles and add favorites to your watchlist.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="guide-card">
+                            <div class="guide-icon">
+                                <i class="fas fa-gavel"></i>
+                            </div>
+                            <div class="guide-content">
+                                <h4>3. Place Your Bid</h4>
+                                <p>Participate in live auctions and place competitive bids on your desired vehicles.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="guide-card">
+                            <div class="guide-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="guide-content">
+                                <h4>4. Win & Complete Purchase</h4>
+                                <p>If you win, complete the secure payment process and arrange vehicle collection.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="position-relative">
-                <div id="auctionsContainer" class="row">
-                    <!-- Auctions will be loaded here dynamically -->
+            <!-- For Sellers -->
+            <div class="mb-5">
+                <h3 class="h4 mb-4">For Sellers</h3>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="guide-card">
+                            <div class="guide-icon">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                            <div class="guide-content">
+                                <h4>1. Submit Your Vehicle</h4>
+                                <p>Provide detailed information and high-quality photos of your vehicle.</p>
+                                <a href="#" class="btn btn-sm btn-outline-primary">Start Selling</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="guide-card">
+                            <div class="guide-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="guide-content">
+                                <h4>2. Get Verified</h4>
+                                <p>Our team reviews your submission and verifies the vehicle's condition and documentation.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="guide-card">
+                            <div class="guide-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="guide-content">
+                                <h4>3. Watch Bids Roll In</h4>
+                                <p>Your vehicle goes live on our platform, reaching thousands of qualified buyers.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="guide-card">
+                            <div class="guide-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="guide-content">
+                                <h4>4. Get Paid</h4>
+                                <p>Once the auction ends, receive secure payment and coordinate vehicle handover.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="auctionsBlurOverlay" class="auctions-blur-overlay d-none"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials">
+        <div class="container">
+            <h2 class="text-center mb-5">What Our Users Say</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="testimonial-card">
+                        <div class="testimonial-content">
+                            <i class="fas fa-quote-left"></i>
+                            <p>"Found my dream Porsche 911 on LuxeBid. The bidding process was exciting and transparent. Couldn't be happier with my purchase!"</p>
+                        </div>
+                        <div class="testimonial-author">
+                            <img src="https://ui-avatars.com/api/?name=John+Smith&background=random" alt="John Smith" class="testimonial-avatar">
+                            <div>
+                                <h5>John Smith</h5>
+                                <p>Buyer</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="testimonial-card">
+                        <div class="testimonial-content">
+                            <i class="fas fa-quote-left"></i>
+                            <p>"Sold my Mercedes in just 7 days for more than I expected. The platform's reach to serious buyers is impressive!"</p>
+                        </div>
+                        <div class="testimonial-author">
+                            <img src="https://ui-avatars.com/api/?name=Sarah+Johnson&background=random" alt="Sarah Johnson" class="testimonial-avatar">
+                            <div>
+                                <h5>Sarah Johnson</h5>
+                                <p>Seller</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="testimonial-card">
+                        <div class="testimonial-content">
+                            <i class="fas fa-quote-left"></i>
+                            <p>"As a classic car collector, I appreciate the quality of vehicles and buyers on LuxeBid. It's now my go-to platform."</p>
+                        </div>
+                        <div class="testimonial-author">
+                            <img src="https://ui-avatars.com/api/?name=Michael+Brown&background=random" alt="Michael Brown" class="testimonial-avatar">
+                            <div>
+                                <h5>Michael Brown</h5>
+                                <p>Collector</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -140,29 +426,41 @@
     <!-- Categories -->
     <section class="categories">
         <div class="container">
-            <h2>Categories</h2>
-            <div class="row g-4">
-                <div class="col-md-3">
+            <h2 class="h3 mb-4">Browse by Category</h2>
+            <div class="row g-3">
+                <div class="col-6 col-md-3">
                     <div class="category-card" data-category="classic">
-                        <span>Classic Cars</span>
+                        <div>
+                            <i class="fas fa-car-side me-2"></i>
+                            <span>Classic Cars</span>
+                        </div>
                         <i class="fas fa-chevron-right"></i>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="category-card" data-category="luxury">
-                        <span>Luxury</span>
+                        <div>
+                            <i class="fas fa-crown me-2"></i>
+                            <span>Luxury</span>
+                        </div>
                         <i class="fas fa-chevron-right"></i>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="category-card" data-category="suv">
-                        <span>SUVs</span>
+                        <div>
+                            <i class="fas fa-truck me-2"></i>
+                            <span>SUVs</span>
+                        </div>
                         <i class="fas fa-chevron-right"></i>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="category-card" data-category="electric">
-                        <span>Electric</span>
+                        <div>
+                            <i class="fas fa-bolt me-2"></i>
+                            <span>Electric</span>
+                        </div>
                         <i class="fas fa-chevron-right"></i>
                     </div>
                 </div>
@@ -182,35 +480,35 @@
     <!-- Footer -->
     <footer>
         <div class="container">
-            <div class="row">
-                <div class="col-md-3">
-                    <h5>LuxeBid</h5>
+            <div class="row g-4">
+                <div class="col-12 col-md-3">
+                    <h5><i class="fas fa-car-side me-2"></i>LuxeBid</h5>
                     <p>Find your dream ride at the ultimate car auction platform.</p>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <h5>Quick Links</h5>
                     <ul>
-                        <li><a href="#">Auctions</a></li>
-                        <li><a href="#">Sell Your Car</a></li>
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">Contact</a></li>
+                        <li><a href="#"><i class="fas fa-car me-2"></i>Auctions</a></li>
+                        <li><a href="#"><i class="fas fa-tag me-2"></i>Sell Your Car</a></li>
+                        <li><a href="#"><i class="fas fa-info-circle me-2"></i>About Us</a></li>
+                        <li><a href="#"><i class="fas fa-envelope me-2"></i>Contact</a></li>
                     </ul>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <h5>Legal</h5>
                     <ul>
-                        <li><a href="#">Terms of Service</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#"><i class="fas fa-file-alt me-2"></i>Terms of Service</a></li>
+                        <li><a href="#"><i class="fas fa-shield-alt me-2"></i>Privacy Policy</a></li>
+                        <li><a href="#"><i class="fas fa-question-circle me-2"></i>FAQ</a></li>
                     </ul>
                 </div>
-                <div class="col-md-3">
+                <div class="col-12 col-md-3">
                     <h5>Follow Us</h5>
                     <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-youtube"></i></a>
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
                     </div>
                 </div>
             </div>
