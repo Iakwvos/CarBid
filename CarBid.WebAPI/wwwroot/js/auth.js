@@ -2,11 +2,13 @@ const AuthService = {
     currentUser: null,
     loginModal: null,
     registerModal: null,
+    portfolioModal: null,
 
     init() {
         // Initialize modals
         const loginModalEl = document.getElementById('loginModal');
         const registerModalEl = document.getElementById('registerModal');
+        const portfolioModalEl = document.getElementById('portfolioModal');
         
         if (loginModalEl) {
             this.loginModal = new bootstrap.Modal(loginModalEl);
@@ -65,6 +67,20 @@ const AuthService = {
             });
         }
 
+        if (portfolioModalEl) {
+            this.portfolioModal = new bootstrap.Modal(portfolioModalEl);
+            
+            // Check if this is the first visit
+            if (!localStorage.getItem('portfolioModalShown')) {
+                // Show the modal after a short delay
+                setTimeout(() => {
+                    this.portfolioModal.show();
+                    // Mark as shown
+                    localStorage.setItem('portfolioModalShown', 'true');
+                }, 1000);
+            }
+        }
+
         // Add logout button handler
         const logoutBtn = document.getElementById('logoutBtn');
         logoutBtn?.addEventListener('click', (e) => {
@@ -100,6 +116,7 @@ const AuthService = {
         const watchlistBtn = document.getElementById('watchlistButton');
         const blurOverlay = document.getElementById('auctionsBlurOverlay');
         const createAuctionBtn = document.getElementById('createAuctionBtn');
+        const auctionsContainer = document.getElementById('auctionsContainer');
 
         if (isAuthenticated && this.currentUser) {
             authButtons?.classList.add('d-none');
@@ -112,12 +129,23 @@ const AuthService = {
                 const fullName = `${this.currentUser.firstName || ''} ${this.currentUser.lastName || ''}`.trim();
                 userFullName.textContent = fullName || this.currentUser.email;
             }
+
+            // Show auctions clearly when logged in
+            if (auctionsContainer) {
+                auctionsContainer.style.filter = 'none';
+                auctionsContainer.style.pointerEvents = 'auto';
+            }
         } else {
             authButtons?.classList.remove('d-none');
             userInfo?.classList.add('d-none');
             watchlistBtn?.classList.add('d-none');
             blurOverlay?.classList.remove('d-none');
             createAuctionBtn?.classList.add('d-none');
+
+            // Ensure auctions are blurred when not logged in
+            if (auctionsContainer) {
+                auctionsContainer.style.pointerEvents = 'none';
+            }
         }
     },
 
